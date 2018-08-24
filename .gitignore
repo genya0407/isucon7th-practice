@@ -1,3 +1,6 @@
 /pkg/
 /isubata
 src/isubata/vendor
+bin/
+src/github.com/
+work
