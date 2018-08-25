@@ -11,9 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
-	"net"
 	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"strconv"
 	"strings"
@@ -734,11 +732,7 @@ func main() {
 	e.GET("add_channel", getAddChannel)
 	e.POST("add_channel", postAddChannel)
 
-	l,err := net.Listen("tcp", ":6000")
-	if err != nil {
-		panic(err)
-	}
-	go http.Serve(l, nil)
+	echopprof.Wrap(e)
 
 	e.Start(":5000")
 }

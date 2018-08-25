@@ -24,3 +24,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/jmoiron/sqlx"
+
+[[constraint]]
+  name = "github.com/sevenNt/echo-pprof"
+  version = "0.1.0"

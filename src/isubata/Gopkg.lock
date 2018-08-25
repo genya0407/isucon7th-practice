@@ -101,6 +101,14 @@
   version = "v0.0.3"
 
 [[projects]]
+  digest = "1:3cbafc128a0e6d81658d54f2aca96fa7943ee264dc5bde5b0f1b7ec9374a5066"
+  name = "github.com/sevenNt/echo-pprof"
+  packages = ["."]
+  pruneopts = ""
+  revision = "8bdaf794e4583c013a089f3902aa140d45a5af1c"
+  version = "v0.1.0"
+
+[[projects]]
   branch = "master"
   digest = "1:857a9ecd5cb13379ecc8f798f6e6b6b574c98b9355657d91e068275f1120aaf7"
   name = "github.com/valyala/bytebufferpool"
@@ -145,6 +153,7 @@
     "github.com/labstack/echo",
     "github.com/labstack/echo-contrib/session",
     "github.com/labstack/echo/middleware",
+    "github.com/sevenNt/echo-pprof",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
