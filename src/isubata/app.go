@@ -295,6 +295,23 @@ func getLogin(c echo.Context) error {
 	})
 }
 
+var users map[string]User = map[string]User{}
+func queryUser(name string) (User, error) {
+	var user User
+
+  user, ok := users[name]
+  if ok {
+    return user, nil
+  }
+
+	err := db.Get(&user, "SELECT salt, password, id FROM user WHERE name = ?", name)
+  if err == nil {
+    users[name] = user
+  }
+
+  return user, err
+}
+
 func postLogin(c echo.Context) error {
 	name := c.FormValue("name")
 	pw := c.FormValue("password")
@@ -302,8 +319,7 @@ func postLogin(c echo.Context) error {
 		return ErrBadReqeust
 	}
 
-	var user User
-	err := db.Get(&user, "SELECT * FROM user WHERE name = ?", name)
+  user, err := queryUser(name)
 	if err == sql.ErrNoRows {
 		return echo.ErrForbidden
 	} else if err != nil {
@@ -481,7 +497,7 @@ func fetchUnread(c echo.Context) error {
 		Cnt       int64     `db:"cnt"`
 	}
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 3)
 
 	counts := []Count{}
 	err := db.Select(&counts,
@@ -653,7 +669,8 @@ func postProfile(c echo.Context) error {
 	avatarName := ""
 	var avatarData []byte
 
-	if fh, err := c.FormFile("avatar_icon"); err == http.ErrMissingFile {
+  fh, err := c.FormFile("avatar_icon");
+	if err == http.ErrMissingFile {
 		// no file upload
 	} else if err != nil {
 		return err
