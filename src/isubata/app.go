@@ -366,6 +366,45 @@ func jsonifyMessage(m Message) (map[string]interface{}, error) {
 	return r, nil
 }
 
+type MessageWithUser struct {
+	UserName        string    `db:"name"`
+	UserDisplayName string    `db:"display_name"`
+	UserAvatarIcon  string    `db:"avatar_icon"`
+
+	MessageID        int64     `db:"msg_id"`
+	MessageContent   string    `db:"content"`
+	MessageCreatedAt time.Time `db:"created_at"`
+}
+
+func queryMessagesWithUser(chanID, lastID int64) ([]MessageWithUser, error) {
+	msgs := []MessageWithUser{}
+	err := db.Select(&msgs,
+    "SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? AND m.id > ? ORDER BY m.id DESC LIMIT 100",
+		chanID, lastID)
+	if err != nil {
+		return nil, err
+	}
+  return msgs, nil
+}
+
+func jsonfyMessagesWithUser(msgs []MessageWithUser) ([]map[string]interface{}) {
+  rs := make([]map[string]interface{}, 0)
+  for _, msg := range msgs {
+    u := User {
+      Name: msg.UserName,
+      DisplayName: msg.UserDisplayName,
+      AvatarIcon: msg.UserAvatarIcon,
+    }
+    r := make(map[string]interface{})
+    r["id"] = msg.MessageID
+    r["user"] = u
+    r["date"] = msg.MessageCreatedAt.Format("2006/01/02 15:04:05")
+    r["content"] = msg.MessageContent
+    rs = append(rs, r)
+  }
+	return rs
+}
+
 func getMessage(c echo.Context) error {
 	userID := sessUserID(c)
 	if userID == 0 {
@@ -381,30 +420,21 @@ func getMessage(c echo.Context) error {
 		return err
 	}
 
-	messages, err := queryMessages(chanID, lastID)
+	messages, err := queryMessagesWithUser(chanID, lastID)
 	if err != nil {
 		return err
-	}
-
-	response := make([]map[string]interface{}, 0)
-	for i := len(messages) - 1; i >= 0; i-- {
-		m := messages[i]
-		r, err := jsonifyMessage(m)
-		if err != nil {
-			return err
-		}
-		response = append(response, r)
 	}
 
 	if len(messages) > 0 {
 		_, err := db.Exec("INSERT INTO haveread (user_id, channel_id, message_id, updated_at, created_at)"+
 			" VALUES (?, ?, ?, NOW(), NOW())"+
 			" ON DUPLICATE KEY UPDATE message_id = ?, updated_at = NOW()",
-			userID, chanID, messages[0].ID, messages[0].ID)
+			userID, chanID, messages[0].MessageID, messages[0].MessageID)
 		if err != nil {
 			return err
 		}
 	}
+  response := jsonfyMessagesWithUser(messages)
 
 	return c.JSON(http.StatusOK, response)
 }
