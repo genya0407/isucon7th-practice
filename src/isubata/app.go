@@ -451,7 +451,7 @@ func fetchUnread(c echo.Context) error {
 
 	counts := []Count{}
 	err := db.Select(&counts,
-		"SELECT m.channel_id, COUNT(m.id) as cnt FROM message as m LEFT OUTER JOIN haveread as h ON m.channel_id = h.channel_id AND m.user_id = h.user_id WHERE (m.id > h.message_id OR h.message_id IS NULL) AND m.user_id = ? GROUP BY m.channel_id;",
+		"SELECT m.channel_id, COUNT(m.id) as cnt FROM message as m LEFT OUTER JOIN haveread as h ON m.channel_id = h.channel_id AND m.user_id = h.user_id WHERE (m.id > h.message_id OR h.message_id IS NULL) AND h.user_id = ? GROUP BY m.channel_id;",
 		userID)
 	if err != nil {
 		return err
