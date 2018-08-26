@@ -459,7 +459,6 @@ func fetchUnread(c echo.Context) error {
 
 	resp := []map[string]interface{}{}
   for _, c := range counts {
-    fmt.Printf("%s %s\n", c.ChannelID, c.Cnt)
 		r := map[string]interface{}{
 			"channel_id": c.ChannelID,
 			"unread":     c.Cnt}
