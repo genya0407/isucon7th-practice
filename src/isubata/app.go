@@ -295,6 +295,23 @@ func getLogin(c echo.Context) error {
 	})
 }
 
+var users map[string]User = map[string]User{}
+func queryUser(name string) (User, error) {
+	var user User
+
+  user, ok := users[name]
+  if ok {
+    return user, nil
+  }
+
+	err := db.Get(&user, "SELECT salt, password, id FROM user WHERE name = ?", name)
+  if err == nil {
+    users[name] = user
+  }
+
+  return user, err
+}
+
 func postLogin(c echo.Context) error {
 	name := c.FormValue("name")
 	pw := c.FormValue("password")
@@ -302,8 +319,7 @@ func postLogin(c echo.Context) error {
 		return ErrBadReqeust
 	}
 
-	var user User
-	err := db.Get(&user, "SELECT * FROM user WHERE name = ?", name)
+  user, err := queryUser(name)
 	if err == sql.ErrNoRows {
 		return echo.ErrForbidden
 	} else if err != nil {
@@ -366,6 +382,45 @@ func jsonifyMessage(m Message) (map[string]interface{}, error) {
 	return r, nil
 }
 
+type MessageWithUser struct {
+	UserName        string    `db:"name"`
+	UserDisplayName string    `db:"display_name"`
+	UserAvatarIcon  string    `db:"avatar_icon"`
+
+	MessageID        int64     `db:"msg_id"`
+	MessageContent   string    `db:"content"`
+	MessageCreatedAt time.Time `db:"created_at"`
+}
+
+func queryMessagesWithUser(chanID, lastID int64) ([]MessageWithUser, error) {
+	msgs := []MessageWithUser{}
+	err := db.Select(&msgs,
+    "SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? AND m.id > ? ORDER BY m.id DESC LIMIT 100",
+		chanID, lastID)
+	if err != nil {
+		return nil, err
+	}
+  return msgs, nil
+}
+
+func jsonfyMessagesWithUser(msgs []MessageWithUser) ([]map[string]interface{}) {
+  rs := make([]map[string]interface{}, 0)
+  for _, msg := range msgs {
+    u := User {
+      Name: msg.UserName,
+      DisplayName: msg.UserDisplayName,
+      AvatarIcon: msg.UserAvatarIcon,
+    }
+    r := make(map[string]interface{})
+    r["id"] = msg.MessageID
+    r["user"] = u
+    r["date"] = msg.MessageCreatedAt.Format("2006/01/02 15:04:05")
+    r["content"] = msg.MessageContent
+    rs = append(rs, r)
+  }
+	return rs
+}
+
 func getMessage(c echo.Context) error {
 	userID := sessUserID(c)
 	if userID == 0 {
@@ -381,30 +436,25 @@ func getMessage(c echo.Context) error {
 		return err
 	}
 
-	messages, err := queryMessages(chanID, lastID)
+	messages, err := queryMessagesWithUser(chanID, lastID)
 	if err != nil {
 		return err
-	}
-
-	response := make([]map[string]interface{}, 0)
-	for i := len(messages) - 1; i >= 0; i-- {
-		m := messages[i]
-		r, err := jsonifyMessage(m)
-		if err != nil {
-			return err
-		}
-		response = append(response, r)
 	}
 
 	if len(messages) > 0 {
 		_, err := db.Exec("INSERT INTO haveread (user_id, channel_id, message_id, updated_at, created_at)"+
 			" VALUES (?, ?, ?, NOW(), NOW())"+
 			" ON DUPLICATE KEY UPDATE message_id = ?, updated_at = NOW()",
-			userID, chanID, messages[0].ID, messages[0].ID)
+			userID, chanID, messages[0].MessageID, messages[0].MessageID)
 		if err != nil {
 			return err
 		}
 	}
+  reversed := []MessageWithUser{}
+  for i := len(messages) - 1; i >= 0; i-- {
+    reversed = append(reversed, messages[i])
+  }
+  response := jsonfyMessagesWithUser(reversed)
 
 	return c.JSON(http.StatusOK, response)
 }
@@ -423,9 +473,9 @@ func queryHaveRead(userID, chID int64) (int64, error) {
 		UpdatedAt time.Time `db:"updated_at"`
 		CreatedAt time.Time `db:"created_at"`
 	}
-	h := HaveRead{}
+	var messageID int64
 
-	err := db.Get(&h, "SELECT * FROM haveread WHERE user_id = ? AND channel_id = ?",
+	err := db.Get(&messageID, "SELECT message_id FROM haveread WHERE user_id = ? AND channel_id = ?",
 		userID, chID)
 
 	if err == sql.ErrNoRows {
@@ -433,7 +483,7 @@ func queryHaveRead(userID, chID int64) (int64, error) {
 	} else if err != nil {
 		return 0, err
 	}
-	return h.MessageID, nil
+	return messageID, nil
 }
 
 func fetchUnread(c echo.Context) error {
@@ -442,37 +492,26 @@ func fetchUnread(c echo.Context) error {
 		return c.NoContent(http.StatusForbidden)
 	}
 
-	time.Sleep(time.Second)
+	type Count struct {
+		ChannelID int64     `db:"channel_id"`
+		Cnt       int64     `db:"cnt"`
+	}
 
-	channels, err := queryChannels()
+	time.Sleep(time.Second * 3)
+
+	counts := []Count{}
+	err := db.Select(&counts,
+		"SELECT m.channel_id, COUNT(m.id) AS cnt FROM message as m LEFT OUTER JOIN (SELECT channel_id, message_id FROM haveread WHERE user_id = ?) AS h ON m.channel_id = h.channel_id WHERE m.id > h.message_id OR h.message_id IS NULL GROUP BY m.channel_id",
+		userID)
 	if err != nil {
 		return err
 	}
 
 	resp := []map[string]interface{}{}
-
-	for _, chID := range channels {
-		lastID, err := queryHaveRead(userID, chID)
-		if err != nil {
-			return err
-		}
-
-		var cnt int64
-		if lastID > 0 {
-			err = db.Get(&cnt,
-				"SELECT COUNT(*) as cnt FROM message WHERE channel_id = ? AND ? < id",
-				chID, lastID)
-		} else {
-			err = db.Get(&cnt,
-				"SELECT COUNT(*) as cnt FROM message WHERE channel_id = ?",
-				chID)
-		}
-		if err != nil {
-			return err
-		}
+  for _, c := range counts {
 		r := map[string]interface{}{
-			"channel_id": chID,
-			"unread":     cnt}
+			"channel_id": c.ChannelID,
+			"unread":     c.Cnt}
 		resp = append(resp, r)
 	}
 
@@ -630,7 +669,8 @@ func postProfile(c echo.Context) error {
 	avatarName := ""
 	var avatarData []byte
 
-	if fh, err := c.FormFile("avatar_icon"); err == http.ErrMissingFile {
+  fh, err := c.FormFile("avatar_icon");
+	if err == http.ErrMissingFile {
 		// no file upload
 	} else if err != nil {
 		return err
