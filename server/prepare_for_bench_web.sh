@@ -1,10 +1,6 @@
 sudo rm /var/log/nginx/access.log
 sudo rm /var/log/mysql/mysql-slow.log
 rm $HOME/pprof_list_result.txt
-PWD=$(pwd)
-cd /home/isucon/isubata/webapp/go
-make
-cd $PWD
 sudo systemctl stop mysql
 sudo systemctl restart isubata.golang.service
 sudo systemctl restart nginx
