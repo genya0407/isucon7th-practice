@@ -130,12 +130,22 @@ func queryMessages(chanID, lastID int64) ([]Message, error) {
 	return msgs, err
 }
 
+var sessToId = map[string]int64{}
+
 func sessUserID(c echo.Context) int64 {
+	cookie, err := c.Cookie("session")
+	if err != nil {
+		return 0
+	}
+	userID, ok := sessToId[cookie.Value]
+	if ok {
+		return userID
+	}
 	sess, _ := session.Get("session", c)
-	var userID int64
 	if x, ok := sess.Values["user_id"]; ok {
 		userID, _ = x.(int64)
 	}
+	sessToId[cookie.Value] = userID
 	return userID
 }
 
