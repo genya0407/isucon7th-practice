@@ -705,6 +705,7 @@ func postProfile(c echo.Context) error {
 	if avatarName != "" && len(avatarData) > 0 {
 		file, err := os.Create("/home/isucon/isubata/webapp/autofs/icons/" + avatarName)
 		if err != nil {
+			fmt.Println("Error creating autofs file!!!!!!!")
 			return err
 		}
 		defer file.Close()

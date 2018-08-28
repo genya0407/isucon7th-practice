@@ -27,4 +27,4 @@
 #
 +auto.master
 
-/home/isucon/isubata/webapp/autofs /etc/auto.icons --timeout=60
+/home/isucon/isubata/webapp/autofs /etc/auto.icons --timeout=6000
