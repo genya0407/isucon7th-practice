@@ -367,9 +367,9 @@ func postMessage(c echo.Context) error {
 		chanID = int64(x)
 	}
 
-	if _, err := addMessage(chanID, userID, message); err != nil {
-		return err
-	}
+	go func() {
+		addMessage(chanID, userID, message)
+	}()
 
 	return c.NoContent(204)
 }
