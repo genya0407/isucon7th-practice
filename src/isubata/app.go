@@ -343,10 +343,7 @@ func getLogout(c echo.Context) error {
 }
 
 func postMessage(c echo.Context) error {
-	user, err := ensureLogin(c)
-	if user == nil {
-		return err
-	}
+	userID := sessUserID(c)
 
 	message := c.FormValue("message")
 	if message == "" {
@@ -360,7 +357,7 @@ func postMessage(c echo.Context) error {
 		chanID = int64(x)
 	}
 
-	if _, err := addMessage(chanID, user.ID, message); err != nil {
+	if _, err := addMessage(chanID, userID, message); err != nil {
 		return err
 	}
 
