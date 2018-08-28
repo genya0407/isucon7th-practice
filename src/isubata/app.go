@@ -296,20 +296,21 @@ func getLogin(c echo.Context) error {
 }
 
 var users map[string]User = map[string]User{}
+
 func queryUser(name string) (User, error) {
 	var user User
 
-  user, ok := users[name]
-  if ok {
-    return user, nil
-  }
+	user, ok := users[name]
+	if ok {
+		return user, nil
+	}
 
 	err := db.Get(&user, "SELECT salt, password, id FROM user WHERE name = ?", name)
-  if err == nil {
-    users[name] = user
-  }
+	if err == nil {
+		users[name] = user
+	}
 
-  return user, err
+	return user, err
 }
 
 func postLogin(c echo.Context) error {
@@ -319,7 +320,7 @@ func postLogin(c echo.Context) error {
 		return ErrBadReqeust
 	}
 
-  user, err := queryUser(name)
+	user, err := queryUser(name)
 	if err == sql.ErrNoRows {
 		return echo.ErrForbidden
 	} else if err != nil {
@@ -383,9 +384,9 @@ func jsonifyMessage(m Message) (map[string]interface{}, error) {
 }
 
 type MessageWithUser struct {
-	UserName        string    `db:"name"`
-	UserDisplayName string    `db:"display_name"`
-	UserAvatarIcon  string    `db:"avatar_icon"`
+	UserName        string `db:"name"`
+	UserDisplayName string `db:"display_name"`
+	UserAvatarIcon  string `db:"avatar_icon"`
 
 	MessageID        int64     `db:"msg_id"`
 	MessageContent   string    `db:"content"`
@@ -395,29 +396,29 @@ type MessageWithUser struct {
 func queryMessagesWithUser(chanID, lastID int64) ([]MessageWithUser, error) {
 	msgs := []MessageWithUser{}
 	err := db.Select(&msgs,
-    "SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? AND m.id > ? ORDER BY m.id DESC LIMIT 100",
+		"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? AND m.id > ? ORDER BY m.id DESC LIMIT 100",
 		chanID, lastID)
 	if err != nil {
 		return nil, err
 	}
-  return msgs, nil
+	return msgs, nil
 }
 
-func jsonfyMessagesWithUser(msgs []MessageWithUser) ([]map[string]interface{}) {
-  rs := make([]map[string]interface{}, 0)
-  for _, msg := range msgs {
-    u := User {
-      Name: msg.UserName,
-      DisplayName: msg.UserDisplayName,
-      AvatarIcon: msg.UserAvatarIcon,
-    }
-    r := make(map[string]interface{})
-    r["id"] = msg.MessageID
-    r["user"] = u
-    r["date"] = msg.MessageCreatedAt.Format("2006/01/02 15:04:05")
-    r["content"] = msg.MessageContent
-    rs = append(rs, r)
-  }
+func jsonfyMessagesWithUser(msgs []MessageWithUser) []map[string]interface{} {
+	rs := make([]map[string]interface{}, 0)
+	for _, msg := range msgs {
+		u := User{
+			Name:        msg.UserName,
+			DisplayName: msg.UserDisplayName,
+			AvatarIcon:  msg.UserAvatarIcon,
+		}
+		r := make(map[string]interface{})
+		r["id"] = msg.MessageID
+		r["user"] = u
+		r["date"] = msg.MessageCreatedAt.Format("2006/01/02 15:04:05")
+		r["content"] = msg.MessageContent
+		rs = append(rs, r)
+	}
 	return rs
 }
 
@@ -450,11 +451,11 @@ func getMessage(c echo.Context) error {
 			return err
 		}
 	}
-  reversed := []MessageWithUser{}
-  for i := len(messages) - 1; i >= 0; i-- {
-    reversed = append(reversed, messages[i])
-  }
-  response := jsonfyMessagesWithUser(reversed)
+	reversed := []MessageWithUser{}
+	for i := len(messages) - 1; i >= 0; i-- {
+		reversed = append(reversed, messages[i])
+	}
+	response := jsonfyMessagesWithUser(reversed)
 
 	return c.JSON(http.StatusOK, response)
 }
@@ -493,8 +494,8 @@ func fetchUnread(c echo.Context) error {
 	}
 
 	type Count struct {
-		ChannelID int64     `db:"channel_id"`
-		Cnt       int64     `db:"cnt"`
+		ChannelID int64 `db:"channel_id"`
+		Cnt       int64 `db:"cnt"`
 	}
 
 	time.Sleep(time.Second * 3)
@@ -508,7 +509,7 @@ func fetchUnread(c echo.Context) error {
 	}
 
 	resp := []map[string]interface{}{}
-  for _, c := range counts {
+	for _, c := range counts {
 		r := map[string]interface{}{
 			"channel_id": c.ChannelID,
 			"unread":     c.Cnt}
@@ -669,7 +670,7 @@ func postProfile(c echo.Context) error {
 	avatarName := ""
 	var avatarData []byte
 
-  fh, err := c.FormFile("avatar_icon");
+	fh, err := c.FormFile("avatar_icon")
 	if err == http.ErrMissingFile {
 		// no file upload
 	} else if err != nil {
@@ -702,7 +703,7 @@ func postProfile(c echo.Context) error {
 	}
 
 	if avatarName != "" && len(avatarData) > 0 {
-		file, err := os.Create("/home/isucon/isubata/webapp/public/icons/" + avatarName)
+		file, err := os.Create("/home/isucon/isubata/webapp/autofs/icons/" + avatarName)
 		if err != nil {
 			return err
 		}
