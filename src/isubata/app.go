@@ -574,14 +574,18 @@ func getHistory(c echo.Context) error {
 		return err
 	}
 
-	return c.Render(http.StatusOK, "history", map[string]interface{}{
-		"ChannelID": chID,
-		"Channels":  channels,
-		"Messages":  reversed,
-		"MaxPage":   maxPage,
-		"Page":      page,
-		"User":      user,
-	})
+	view := templates.HistoryView{
+		ChannelID: chID,
+		Channels:  channels,
+		Messages:  reversed,
+		MaxPage:   maxPage,
+		Page:      page,
+		User:      *user,
+	}
+	var buf bytes.Buffer
+	view.WriteHTML(&buf)
+
+	return c.HTMLBlob(http.StatusOK, buf.Bytes())
 }
 
 func getProfile(c echo.Context) error {
