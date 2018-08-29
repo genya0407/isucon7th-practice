@@ -502,18 +502,6 @@ func fetchUnread(c echo.Context) error {
 		return c.NoContent(http.StatusForbidden)
 	}
 
-	lastFetchedAt, ok := lastFetchedAtByUser[userID]
-	if ok {
-		now := time.Now()
-		shouldFetchedAt := lastFetchedAt.Add(time.Duration(8) * time.Second)
-		if shouldFetchedAt.After(now) {
-			// immediate return
-		} else {
-			// sleep untile `shouldFetchedAfter`
-			time.Sleep(shouldFetchedAt.Sub(now))
-		}
-	}
-
 	type Count struct {
 		ChannelID int64 `db:"channel_id"`
 		Cnt       int64 `db:"cnt"`
@@ -533,6 +521,18 @@ func fetchUnread(c echo.Context) error {
 			"channel_id": c.ChannelID,
 			"unread":     c.Cnt}
 		resp = append(resp, r)
+	}
+
+	lastFetchedAt, ok := lastFetchedAtByUser[userID]
+	if ok {
+		now := time.Now()
+		shouldFetchedAt := lastFetchedAt.Add(time.Duration(8) * time.Second)
+		if shouldFetchedAt.After(now) {
+			// immediate return
+		} else {
+			// sleep untile `shouldFetchedAfter`
+			time.Sleep(shouldFetchedAt.Sub(now))
+		}
 	}
 
 	lastFetchedAtByUser[userID] = time.Now()
