@@ -28,3 +28,7 @@
 [[constraint]]
   name = "github.com/sevenNt/echo-pprof"
   version = "0.1.0"
+
+[[constraint]]
+  name = "github.com/valyala/quicktemplate"
+  version = "20160617.0.0"

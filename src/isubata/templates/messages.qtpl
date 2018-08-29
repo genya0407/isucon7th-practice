@@ -1,0 +1,38 @@
+{% import "time" %}
+
+
+{% code
+type MessageWithUser struct {
+    UserName        string `db:"name"`
+    UserDisplayName string `db:"display_name"`
+    UserAvatarIcon  string `db:"avatar_icon"`
+
+    MessageID        int64     `db:"msg_id"`
+    MessageContent   string    `db:"content"`
+    MessageCreatedAt time.Time `db:"created_at"`
+}
+
+type MessageMarshaler struct {
+    Msgs []MessageWithUser
+}
+%}
+
+{% stripspace %}
+{% func (mm *MessageMarshaler) JSON() %}
+[
+    {% for i, msg := range mm.Msgs %}
+        {
+            "content": {%q msg.MessageContent %},
+            "date": {%q msg.MessageCreatedAt.Format("2006/01/02 15:04:05") %},
+            "id": {%v msg.MessageID %},
+            "user": {
+                "name": {%q msg.UserName %},
+                "display_name": {%q msg.UserDisplayName %},
+                "avatar_icon": {%q msg.UserAvatarIcon %}
+            }
+        }
+        {% if i + 1 < len(mm.Msgs) %},{% endif %}
+    {% endfor %}
+]
+{% endfunc %}
+{% endstripspace %}

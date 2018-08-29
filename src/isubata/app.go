@@ -24,6 +24,7 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/middleware"
 	"github.com/sevenNt/echo-pprof"
+	"isubata/templates"
 )
 
 const (
@@ -390,18 +391,8 @@ func jsonifyMessage(m Message) (map[string]interface{}, error) {
 	return r, nil
 }
 
-type MessageWithUser struct {
-	UserName        string `db:"name"`
-	UserDisplayName string `db:"display_name"`
-	UserAvatarIcon  string `db:"avatar_icon"`
-
-	MessageID        int64     `db:"msg_id"`
-	MessageContent   string    `db:"content"`
-	MessageCreatedAt time.Time `db:"created_at"`
-}
-
-func queryMessagesWithUser(chanID, lastID int64) ([]MessageWithUser, error) {
-	msgs := []MessageWithUser{}
+func queryMessagesWithUser(chanID, lastID int64) ([]templates.MessageWithUser, error) {
+	msgs := []templates.MessageWithUser{}
 	err := db.Select(&msgs,
 		"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? AND m.id > ? ORDER BY m.id DESC LIMIT 100",
 		chanID, lastID)
@@ -411,7 +402,7 @@ func queryMessagesWithUser(chanID, lastID int64) ([]MessageWithUser, error) {
 	return msgs, nil
 }
 
-func jsonfyMessagesWithUser(msgs []MessageWithUser) []map[string]interface{} {
+func jsonfyMessagesWithUser(msgs []templates.MessageWithUser) []map[string]interface{} {
 	rs := make([]map[string]interface{}, 0)
 	for _, msg := range msgs {
 		u := User{
@@ -458,7 +449,7 @@ func getMessage(c echo.Context) error {
 		}
 	}()
 
-	reversed := []MessageWithUser{}
+	reversed := []templates.MessageWithUser{}
 	for i := len(messages) - 1; i >= 0; i-- {
 		reversed = append(reversed, messages[i])
 	}
@@ -578,7 +569,7 @@ func getHistory(c echo.Context) error {
 		return ErrBadReqeust
 	}
 
-	messages := []MessageWithUser{}
+	messages := []templates.MessageWithUser{}
 	err = db.Select(&messages,
 		"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? ORDER BY m.id DESC LIMIT ? OFFSET ?",
 		chID, N, (page-1)*N)
@@ -586,7 +577,7 @@ func getHistory(c echo.Context) error {
 		return err
 	}
 
-	reversed := []MessageWithUser{}
+	reversed := []templates.MessageWithUser{}
 	for i := len(messages) - 1; i >= 0; i-- {
 		reversed = append(reversed, messages[i])
 	}
