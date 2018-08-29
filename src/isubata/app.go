@@ -500,6 +500,8 @@ func fetchUnread(c echo.Context) error {
 		return c.NoContent(http.StatusForbidden)
 	}
 
+	time.Sleep(time.Second)
+
 	type Count struct {
 		ChannelID int64 `db:"channel_id"`
 		Cnt       int64 `db:"cnt"`
