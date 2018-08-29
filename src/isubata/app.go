@@ -529,7 +529,7 @@ func fetchUnread(c echo.Context) error {
 	if ok {
 		now := time.Now()
 		shouldFetchedAt := lastFetchedAt.Add(time.Duration(8) * time.Second)
-		if shouldFetchedAt.After(now) {
+		if shouldFetchedAt.Before(now) {
 			// immediate return
 		} else {
 			// sleep untile `shouldFetchedAt`
