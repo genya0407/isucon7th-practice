@@ -528,7 +528,7 @@ func fetchUnread(c echo.Context) error {
 	lastFetchedAt, ok := lastFetchedAtByUser[userID]
 	if ok {
 		now := time.Now()
-		shouldFetchedAt := lastFetchedAt.Add(time.Duration(8) * time.Second)
+		shouldFetchedAt := lastFetchedAt.Add(time.Duration(9) * time.Second)
 		if shouldFetchedAt.Before(now) {
 			// immediate return
 		} else {
