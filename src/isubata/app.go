@@ -494,13 +494,25 @@ func queryHaveRead(userID, chID int64) (int64, error) {
 	return messageID, nil
 }
 
+var lastFetchedAtByUser = map[int64]time.Time{}
+
 func fetchUnread(c echo.Context) error {
 	userID := sessUserID(c)
 	if userID == 0 {
 		return c.NoContent(http.StatusForbidden)
 	}
 
-	time.Sleep(time.Second)
+	lastFetchedAt, ok := lastFetchedAtByUser[userID]
+	if ok {
+		now := time.Now()
+		shouldFetchedAt := lastFetchedAt.Add(time.Duration(8) * time.Second)
+		if shouldFetchedAt.After(now) {
+			// immediate return
+		} else {
+			// sleep untile `shouldFetchedAfter`
+			time.Sleep(shouldFetchedAt.Sub(now))
+		}
+	}
 
 	type Count struct {
 		ChannelID int64 `db:"channel_id"`
@@ -522,6 +534,8 @@ func fetchUnread(c echo.Context) error {
 			"unread":     c.Cnt}
 		resp = append(resp, r)
 	}
+
+	lastFetchedAtByUser[userID] = time.Now()
 
 	return c.JSON(http.StatusOK, resp)
 }
