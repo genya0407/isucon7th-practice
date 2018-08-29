@@ -1,24 +1,16 @@
-{% import "time" %}
-
+{% import (
+    "time"
+    "isubata/types"
+)%}
 
 {% code
-type MessageWithUser struct {
-    UserName        string `db:"name"`
-    UserDisplayName string `db:"display_name"`
-    UserAvatarIcon  string `db:"avatar_icon"`
-
-    MessageID        int64     `db:"msg_id"`
-    MessageContent   string    `db:"content"`
-    MessageCreatedAt time.Time `db:"created_at"`
-}
-
 type MessageMarshaler struct {
-    Msgs []MessageWithUser
+    Msgs []types.MessageWithUser
 }
 %}
 
 {% stripspace %}
-{% func (mm *MessageMarshaler) JSON() %}
+{% func (mm MessageMarshaler) JSON() %}
 [
     {% for i, msg := range mm.Msgs %}
         {

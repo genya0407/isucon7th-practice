@@ -1,3 +1,22 @@
+{% import (
+  "isubata/types"
+) %}
+
+{% code
+
+type HistoryView struct {
+    ChannelID int64
+    Channels  []types.ChannelInfo
+    Messages  []types.MessageWithUser
+    MaxPage   int64
+    Page      int64
+    User      types.User
+}
+
+%}
+
+{% func (h HistoryView) HTML() %}
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -19,17 +38,17 @@
 
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
       <ul class="nav navbar-nav ml-auto">
-      {{if .ChannelID}}
-      <li class="nav-item"><a href="/history/{{.ChannelID}}" class="nav-link">チャットログ</a></li>
-      {{end}}
-      {{if .User}}
-        <li class="nav-item"><a href="/add_channel" class="nav-link">チャンネル追加</a></li>
-        <li class="nav-item"><a href="/profile/{{ .User.Name }}" class="nav-link">{{ .User.DisplayName }}</a></li>
-        <li class="nav-item"><a href="/logout" class="nav-link">ログアウト</a></li>
-      {{else}}
-        <li><a href="/register" class="nav-link">新規登録</a></li>
-        <li><a href="/login" class="nav-link">ログイン</a></li>
-      {{end}}
+        {% if h.ChannelID != 0 %}
+          <li class="nav-item"><a href="/history/{%v h.ChannelID %}" class="nav-link">チャットログ</a></li>
+        {% endif %}
+        {% if h.User %}
+          <li class="nav-item"><a href="/add_channel" class="nav-link">チャンネル追加</a></li>
+          <li class="nav-item"><a href="/profile/{%q h.UserName %}" class="nav-link">{%q h.UserDisplayName %}</a></li>
+          <li class="nav-item"><a href="/logout" class="nav-link">ログアウト</a></li>
+        {% else %}
+          <li><a href="/register" class="nav-link">新規登録</a></li>
+          <li><a href="/login" class="nav-link">ログイン</a></li>
+        {% endif %}
       </ul>
     </div>
   </nav>
@@ -37,49 +56,59 @@
   <div class="container-fluid">
   <div class="row">
     <nav class="col-sm-3 col-md-3 hidden-xs-down bg-faded sidebar">
-            {{ if .User }}
-      <ul class="nav nav-pills flex-column">
-            {{ range $ch := .Channels }}
-      <li class="nav-item">
-        <a class="nav-link justify-content-between {{ if eq $.ChannelID $ch.ID }} active {{ end }}"
-           href="/channel/{{$ch.ID}}">
-                    {{$ch.Name}}
-          <span class="badge badge-pill badge-primary float-right" id="unread-{{$ch.ID}}"></span>
-        </a>
-      </li>
-            {{ end }}
-      </ul>
-            {{ end }}
+      {% if h.User %}
+        <ul class="nav nav-pills flex-column">
+          {% for _, ch := range h.Channels %}
+            <li class="nav-item">
+              <a class="nav-link justify-content-between {% if h.ChannelID == ch.ID %} active {% endif %}"
+                 href="/channel/{%v ch.ID %}">
+                  {%q ch.Name %}
+                <span class="badge badge-pill badge-primary float-right" id="unread-{%v ch.ID %}"></span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
     </nav>
     <main class="col-sm-9 offset-sm-3 col-md-9 offset-md-3 pt-3">
 
       <div id="history">
-        {{range .Messages}}
-        <div class="media message">
-          <img class="avatar d-flex align-self-start mr-3" src="/icons/{{.user.AvatarIcon}}" alt="no avatar">
-          <div class="media-body">
-            <h5 class="mt-0"><a href="/profile/{{.user.Name}}">{{.user.DisplayName}}@{{.user.Name}}</a></h5>
-            <p class="content">{{.content}}</p>
-            <p class="message-date">{{.date}}</p>
+        {% for _, msg := range h.Messages %}
+          <div class="media message">
+            <img class="avatar d-flex align-self-start mr-3" src="/icons/{%q msg.UserAvatarIcon %}" alt="no avatar">
+            <div class="media-body">
+              <h5 class="mt-0"><a href="/profile/{%q msg.UserName %}">{%q msg.UserDisplayName %}@{%q msg.UserName %}</a></h5>
+              <p class="content">{%q msg.MessageContext %}</p>
+              <p class="message-date">{%v msg.MessageCreatedAt.Format("2006/01/02 15:04:05") %}</p>
+            </div>
           </div>
-        </div>
-        {{end}}
+        {% endfor %}
       </div>
 
       <nav>
         <ul class="pagination">
-          {{ if ne .Page 1 }}
-          <li><a href="/history/{{.ChannelID}}?page={{add .Page -1}}"><span>«</span></a></li>
-          {{ end }}
-          {{ range $p := xrange 1 .MaxPage }}
-            {{ if eq $p $.Page }}<li class="active">{{ else }}<li>{{ end }}
-            <a href="/history/{{$.ChannelID}}?page={{ $p  }}">{{ $p }}</a></li>
-          {{ end }}
-          {{ if ne .Page .MaxPage }}
-            <li><a href="/history/{{.ChannelID}}?page={{add .Page 1}}"><span>»</span></a></li>
-          {{ end }}
+          {% if h.Page != 1 %}
+            <li><a href="/history/{%v h.ChannelID %}?page={%v (h.Page - 1) %}"><span>«</span></a></li>
+          {% endif %}
+
+          {% for p := int64(1); p <= h.MaxPage; p++ %}
+            {% if p == h.Page %}
+              <li class="active">
+            {% else %}
+              <li>
+            {% endif %}
+                <a href="/history/{%v h.ChannelID %}?page={%v p %}">
+                  {%v p %}
+                </a>
+              </li>
+          {% endfor %}
+
+          {% if h.Page != h.MaxPage %}
+            <li><a href="/history/{%v h.ChannelID %}?page={%v (h.Page + 1) %}"><span>»</span></a></li>
+          {% endif %}
         </ul>
       </nav>
 
     </main>
 </div></div></body></html>
+{% endfunc %}

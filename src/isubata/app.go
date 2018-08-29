@@ -26,6 +26,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/sevenNt/echo-pprof"
 	"isubata/templates"
+	"isubata/types"
 )
 
 const (
@@ -86,18 +87,8 @@ func init() {
 	log.Printf("Succeeded to connect db.")
 }
 
-type User struct {
-	ID          int64     `json:"-" db:"id"`
-	Name        string    `json:"name" db:"name"`
-	Salt        string    `json:"-" db:"salt"`
-	Password    string    `json:"-" db:"password"`
-	DisplayName string    `json:"display_name" db:"display_name"`
-	AvatarIcon  string    `json:"avatar_icon" db:"avatar_icon"`
-	CreatedAt   time.Time `json:"-" db:"created_at"`
-}
-
-func getUser(userID int64) (*User, error) {
-	u := User{}
+func getUser(userID int64) (*types.User, error) {
+	u := types.User{}
 	if err := db.Get(&u, "SELECT * FROM user WHERE id = ?", userID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -161,8 +152,8 @@ func sessSetUserID(c echo.Context, id int64) {
 	sess.Save(c.Request(), c.Response())
 }
 
-func ensureLogin(c echo.Context) (*User, error) {
-	var user *User
+func ensureLogin(c echo.Context) (*types.User, error) {
+	var user *types.User
 	var err error
 
 	userID := sessUserID(c)
@@ -234,14 +225,6 @@ func getIndex(c echo.Context) error {
 	})
 }
 
-type ChannelInfo struct {
-	ID          int64     `db:"id"`
-	Name        string    `db:"name"`
-	Description string    `db:"description"`
-	UpdatedAt   time.Time `db:"updated_at"`
-	CreatedAt   time.Time `db:"created_at"`
-}
-
 func getChannel(c echo.Context) error {
 	user, err := ensureLogin(c)
 	if user == nil {
@@ -251,7 +234,7 @@ func getChannel(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	channels := []ChannelInfo{}
+	channels := []types.ChannelInfo{}
 	err = db.Select(&channels, "SELECT * FROM channel ORDER BY id")
 	if err != nil {
 		return err
@@ -275,7 +258,7 @@ func getChannel(c echo.Context) error {
 func getRegister(c echo.Context) error {
 	return c.Render(http.StatusOK, "register", map[string]interface{}{
 		"ChannelID": 0,
-		"Channels":  []ChannelInfo{},
+		"Channels":  []types.ChannelInfo{},
 		"User":      nil,
 	})
 }
@@ -302,15 +285,15 @@ func postRegister(c echo.Context) error {
 func getLogin(c echo.Context) error {
 	return c.Render(http.StatusOK, "login", map[string]interface{}{
 		"ChannelID": 0,
-		"Channels":  []ChannelInfo{},
+		"Channels":  []types.ChannelInfo{},
 		"User":      nil,
 	})
 }
 
-var users map[string]User = map[string]User{}
+var users map[string]types.User = map[string]types.User{}
 
-func queryUser(name string) (User, error) {
-	var user User
+func queryUser(name string) (types.User, error) {
+	var user types.User
 
 	user, ok := users[name]
 	if ok {
@@ -377,7 +360,7 @@ func postMessage(c echo.Context) error {
 }
 
 func jsonifyMessage(m Message) (map[string]interface{}, error) {
-	u := User{}
+	u := types.User{}
 	err := db.Get(&u, "SELECT name, display_name, avatar_icon FROM user WHERE id = ?",
 		m.UserID)
 	if err != nil {
@@ -392,8 +375,8 @@ func jsonifyMessage(m Message) (map[string]interface{}, error) {
 	return r, nil
 }
 
-func queryMessagesWithUser(chanID, lastID int64) ([]templates.MessageWithUser, error) {
-	msgs := []templates.MessageWithUser{}
+func queryMessagesWithUser(chanID, lastID int64) ([]types.MessageWithUser, error) {
+	msgs := []types.MessageWithUser{}
 	err := db.Select(&msgs,
 		"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? AND m.id > ? ORDER BY m.id DESC LIMIT 100",
 		chanID, lastID)
@@ -403,10 +386,10 @@ func queryMessagesWithUser(chanID, lastID int64) ([]templates.MessageWithUser, e
 	return msgs, nil
 }
 
-func jsonfyMessagesWithUser(msgs []templates.MessageWithUser) []map[string]interface{} {
+func jsonfyMessagesWithUser(msgs []types.MessageWithUser) []map[string]interface{} {
 	rs := make([]map[string]interface{}, 0)
 	for _, msg := range msgs {
-		u := User{
+		u := types.User{
 			Name:        msg.UserName,
 			DisplayName: msg.UserDisplayName,
 			AvatarIcon:  msg.UserAvatarIcon,
@@ -450,7 +433,7 @@ func getMessage(c echo.Context) error {
 		}
 	}()
 
-	reversed := []templates.MessageWithUser{}
+	reversed := []types.MessageWithUser{}
 	for i := len(messages) - 1; i >= 0; i-- {
 		reversed = append(reversed, messages[i])
 	}
@@ -572,7 +555,7 @@ func getHistory(c echo.Context) error {
 		return ErrBadReqeust
 	}
 
-	messages := []templates.MessageWithUser{}
+	messages := []types.MessageWithUser{}
 	err = db.Select(&messages,
 		"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? ORDER BY m.id DESC LIMIT ? OFFSET ?",
 		chID, N, (page-1)*N)
@@ -580,13 +563,12 @@ func getHistory(c echo.Context) error {
 		return err
 	}
 
-	reversed := []templates.MessageWithUser{}
+	reversed := []types.MessageWithUser{}
 	for i := len(messages) - 1; i >= 0; i-- {
 		reversed = append(reversed, messages[i])
 	}
-	mjson := jsonfyMessagesWithUser(reversed)
 
-	channels := []ChannelInfo{}
+	channels := []types.ChannelInfo{}
 	err = db.Select(&channels, "SELECT * FROM channel ORDER BY id")
 	if err != nil {
 		return err
@@ -595,7 +577,7 @@ func getHistory(c echo.Context) error {
 	return c.Render(http.StatusOK, "history", map[string]interface{}{
 		"ChannelID": chID,
 		"Channels":  channels,
-		"Messages":  mjson,
+		"Messages":  reversed,
 		"MaxPage":   maxPage,
 		"Page":      page,
 		"User":      user,
@@ -608,14 +590,14 @@ func getProfile(c echo.Context) error {
 		return err
 	}
 
-	channels := []ChannelInfo{}
+	channels := []types.ChannelInfo{}
 	err = db.Select(&channels, "SELECT * FROM channel ORDER BY id")
 	if err != nil {
 		return err
 	}
 
 	userName := c.Param("user_name")
-	var other User
+	var other types.User
 	err = db.Get(&other, "SELECT * FROM user WHERE name = ?", userName)
 	if err == sql.ErrNoRows {
 		return echo.ErrNotFound
@@ -639,7 +621,7 @@ func getAddChannel(c echo.Context) error {
 		return err
 	}
 
-	channels := []ChannelInfo{}
+	channels := []types.ChannelInfo{}
 	err = db.Select(&channels, "SELECT * FROM channel ORDER BY id")
 	if err != nil {
 		return err
