@@ -495,7 +495,6 @@ func queryHaveRead(userID, chID int64) (int64, error) {
 }
 
 func fetchUnread(c echo.Context) error {
-	t := time.NewTicker(9 * time.Second)
 	userID := sessUserID(c)
 	if userID == 0 {
 		return c.NoContent(http.StatusForbidden)
@@ -521,11 +520,6 @@ func fetchUnread(c echo.Context) error {
 			"unread":     c.Cnt}
 		resp = append(resp, r)
 	}
-
-	if len(counts) < 10 {
-		<-t.C
-	}
-	t.Stop()
 
 	return c.JSON(http.StatusOK, resp)
 }
