@@ -588,6 +588,14 @@ func getHistory(c echo.Context) error {
 	return c.HTMLBlob(http.StatusOK, buf.Bytes())
 }
 
+type GetProfileDTO struct {
+	ChannelID   int64
+	Channels    []types.ChannelInfo
+	User        types.User
+	Other       types.User
+	SelfProfile bool
+}
+
 func getProfile(c echo.Context) error {
 	self, err := ensureLogin(c)
 	if self == nil {
@@ -610,12 +618,12 @@ func getProfile(c echo.Context) error {
 		return err
 	}
 
-	return c.Render(http.StatusOK, "profile", map[string]interface{}{
-		"ChannelID":   0,
-		"Channels":    channels,
-		"User":        self,
-		"Other":       other,
-		"SelfProfile": self.ID == other.ID,
+	return c.Render(http.StatusOK, "profile", GetProfileDTO {
+		ChannelID:   0,
+		Channels:    channels,
+		User:        *self,
+		Other:       other,
+		SelfProfile: self.ID == other.ID,
 	})
 }
 
