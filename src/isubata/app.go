@@ -507,6 +507,8 @@ func fetchUnread(c echo.Context) error {
 		Cnt       int64 `db:"cnt"`
 	}
 
+	time.Sleep(time.Second)
+
 	counts := []Count{}
 	err := db.Select(&counts,
 		"SELECT m.channel_id, COUNT(m.id) AS cnt FROM message as m LEFT OUTER JOIN (SELECT channel_id, message_id FROM haveread WHERE user_id = ?) AS h ON m.channel_id = h.channel_id WHERE m.id > h.message_id OR h.message_id IS NULL GROUP BY m.channel_id",
@@ -530,7 +532,7 @@ func fetchUnread(c echo.Context) error {
 		if shouldFetchedAt.After(now) {
 			// immediate return
 		} else {
-			// sleep untile `shouldFetchedAfter`
+			// sleep untile `shouldFetchedAt`
 			time.Sleep(shouldFetchedAt.Sub(now))
 		}
 	}
