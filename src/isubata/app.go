@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	crand "crypto/rand"
 	"crypto/sha1"
 	"database/sql"
@@ -453,9 +454,11 @@ func getMessage(c echo.Context) error {
 	for i := len(messages) - 1; i >= 0; i-- {
 		reversed = append(reversed, messages[i])
 	}
-	response := jsonfyMessagesWithUser(reversed)
+	marshaler := templates.MessageMarshaler{Msgs: reversed}
+	var buf bytes.Buffer
+	marshaler.WriteJSON(&buf)
 
-	return c.JSON(http.StatusOK, response)
+	return c.JSONBlob(http.StatusOK, buf.Bytes())
 }
 
 func queryChannels() ([]int64, error) {
