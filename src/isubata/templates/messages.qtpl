@@ -22,13 +22,13 @@ type MessageMarshaler struct {
 [
     {% for i, msg := range mm.Msgs %}
         {
-            "content": {%q msg.MessageContent %},
-            "date": {%q msg.MessageCreatedAt.Format("2006/01/02 15:04:05") %},
+            "content": {%q= msg.MessageContent %},
+            "date": {%q= msg.MessageCreatedAt.Format("2006/01/02 15:04:05") %},
             "id": {%v msg.MessageID %},
             "user": {
-                "name": {%q msg.UserName %},
-                "display_name": {%q msg.UserDisplayName %},
-                "avatar_icon": {%q msg.UserAvatarIcon %}
+                "name": {%q= msg.UserName %},
+                "display_name": {%q= msg.UserDisplayName %},
+                "avatar_icon": {%q= msg.UserAvatarIcon %}
             }
         }
         {% if i + 1 < len(mm.Msgs) %},{% endif %}

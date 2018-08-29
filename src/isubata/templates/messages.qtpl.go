@@ -44,11 +44,11 @@ func (mm *MessageMarshaler) StreamJSON(qw422016 *qt422016.Writer) {
 		//line messages.qtpl:23
 		qw422016.N().S(`{"content":`)
 		//line messages.qtpl:25
-		qw422016.E().Q(msg.MessageContent)
+		qw422016.N().Q(msg.MessageContent)
 		//line messages.qtpl:25
 		qw422016.N().S(`,"date":`)
 		//line messages.qtpl:26
-		qw422016.E().Q(msg.MessageCreatedAt.Format("2006/01/02 15:04:05"))
+		qw422016.N().Q(msg.MessageCreatedAt.Format("2006/01/02 15:04:05"))
 		//line messages.qtpl:26
 		qw422016.N().S(`,"id":`)
 		//line messages.qtpl:27
@@ -56,15 +56,15 @@ func (mm *MessageMarshaler) StreamJSON(qw422016 *qt422016.Writer) {
 		//line messages.qtpl:27
 		qw422016.N().S(`,"user": {"name":`)
 		//line messages.qtpl:29
-		qw422016.E().Q(msg.UserName)
+		qw422016.N().Q(msg.UserName)
 		//line messages.qtpl:29
 		qw422016.N().S(`,"display_name":`)
 		//line messages.qtpl:30
-		qw422016.E().Q(msg.UserDisplayName)
+		qw422016.N().Q(msg.UserDisplayName)
 		//line messages.qtpl:30
 		qw422016.N().S(`,"avatar_icon":`)
 		//line messages.qtpl:31
-		qw422016.E().Q(msg.UserAvatarIcon)
+		qw422016.N().Q(msg.UserAvatarIcon)
 		//line messages.qtpl:31
 		qw422016.N().S(`}}`)
 		//line messages.qtpl:34
