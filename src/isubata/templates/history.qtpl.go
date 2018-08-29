@@ -58,49 +58,24 @@ func (h HistoryView) StreamHTML(qw422016 *qt422016.Writer) {
 
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
       <ul class="nav navbar-nav ml-auto">
-        `)
+        <li class="nav-item"><a href="/history/`)
 	//line history.qtpl:41
-	if h.ChannelID {
-		//line history.qtpl:41
-		qw422016.N().S(`
-          <li class="nav-item"><a href="/history/`)
-		//line history.qtpl:42
-		qw422016.E().V(h.ChannelID)
-		//line history.qtpl:42
-		qw422016.N().S(`" class="nav-link">チャットログ</a></li>
-        `)
-		//line history.qtpl:43
-	}
+	qw422016.E().V(h.ChannelID)
+	//line history.qtpl:41
+	qw422016.N().S(`" class="nav-link">チャットログ</a></li>
+        <li class="nav-item"><a href="/add_channel" class="nav-link">チャンネル追加</a></li>
+        <li class="nav-item"><a href="/profile/`)
 	//line history.qtpl:43
-	qw422016.N().S(`
-        `)
-	//line history.qtpl:44
-	if h.User {
-		//line history.qtpl:44
-		qw422016.N().S(`
-          <li class="nav-item"><a href="/add_channel" class="nav-link">チャンネル追加</a></li>
-          <li class="nav-item"><a href="/profile/`)
-		//line history.qtpl:46
-		qw422016.E().Q(h.UserName)
-		//line history.qtpl:46
-		qw422016.N().S(`" class="nav-link">`)
-		//line history.qtpl:46
-		qw422016.E().Q(h.UserDisplayName)
-		//line history.qtpl:46
-		qw422016.N().S(`</a></li>
-          <li class="nav-item"><a href="/logout" class="nav-link">ログアウト</a></li>
-        `)
-		//line history.qtpl:48
-	} else {
-		//line history.qtpl:48
-		qw422016.N().S(`
-          <li><a href="/register" class="nav-link">新規登録</a></li>
-          <li><a href="/login" class="nav-link">ログイン</a></li>
-        `)
-		//line history.qtpl:51
-	}
-	//line history.qtpl:51
-	qw422016.N().S(`
+	qw422016.E().Q(h.User.Name)
+	//line history.qtpl:43
+	qw422016.N().S(`" class="nav-link">`)
+	//line history.qtpl:43
+	qw422016.E().Q(h.User.DisplayName)
+	//line history.qtpl:43
+	qw422016.N().S(`</a></li>
+        <li class="nav-item"><a href="/logout" class="nav-link">ログアウト</a></li>
+        <li><a href="/register" class="nav-link">新規登録</a></li>
+        <li><a href="/login" class="nav-link">ログイン</a></li>
       </ul>
     </div>
   </nav>
@@ -108,187 +83,177 @@ func (h HistoryView) StreamHTML(qw422016 *qt422016.Writer) {
   <div class="container-fluid">
   <div class="row">
     <nav class="col-sm-3 col-md-3 hidden-xs-down bg-faded sidebar">
-      `)
-	//line history.qtpl:59
-	if h.User {
+      <ul class="nav nav-pills flex-column">
+        `)
+	//line history.qtpl:55
+	for _, ch := range h.Channels {
+		//line history.qtpl:55
+		qw422016.N().S(`
+          <li class="nav-item">
+            <a class="nav-link justify-content-between `)
+		//line history.qtpl:57
+		if h.ChannelID == ch.ID {
+			//line history.qtpl:57
+			qw422016.N().S(` active `)
+			//line history.qtpl:57
+		}
+		//line history.qtpl:57
+		qw422016.N().S(`"
+               href="/channel/`)
+		//line history.qtpl:58
+		qw422016.E().V(ch.ID)
+		//line history.qtpl:58
+		qw422016.N().S(`">
+                `)
+		//line history.qtpl:59
+		qw422016.E().Q(ch.Name)
 		//line history.qtpl:59
 		qw422016.N().S(`
-        <ul class="nav nav-pills flex-column">
-          `)
-		//line history.qtpl:61
-		for _, ch := range h.Channels {
-			//line history.qtpl:61
-			qw422016.N().S(`
-            <li class="nav-item">
-              <a class="nav-link justify-content-between `)
-			//line history.qtpl:63
-			if h.ChannelID == ch.ID {
-				//line history.qtpl:63
-				qw422016.N().S(` active `)
-				//line history.qtpl:63
-			}
-			//line history.qtpl:63
-			qw422016.N().S(`"
-                 href="/channel/`)
-			//line history.qtpl:64
-			qw422016.E().V(ch.ID)
-			//line history.qtpl:64
-			qw422016.N().S(`">
-                  `)
-			//line history.qtpl:65
-			qw422016.E().Q(ch.Name)
-			//line history.qtpl:65
-			qw422016.N().S(`
-                <span class="badge badge-pill badge-primary float-right" id="unread-`)
-			//line history.qtpl:66
-			qw422016.E().V(ch.ID)
-			//line history.qtpl:66
-			qw422016.N().S(`"></span>
-              </a>
-            </li>
-          `)
-			//line history.qtpl:69
-		}
-		//line history.qtpl:69
-		qw422016.N().S(`
-        </ul>
-      `)
-		//line history.qtpl:71
+              <span class="badge badge-pill badge-primary float-right" id="unread-`)
+		//line history.qtpl:60
+		qw422016.E().V(ch.ID)
+		//line history.qtpl:60
+		qw422016.N().S(`"></span>
+            </a>
+          </li>
+        `)
+		//line history.qtpl:63
 	}
-	//line history.qtpl:71
+	//line history.qtpl:63
 	qw422016.N().S(`
+      </ul>
     </nav>
     <main class="col-sm-9 offset-sm-3 col-md-9 offset-md-3 pt-3">
 
       <div id="history">
         `)
-	//line history.qtpl:76
+	//line history.qtpl:69
 	for _, msg := range h.Messages {
-		//line history.qtpl:76
+		//line history.qtpl:69
 		qw422016.N().S(`
           <div class="media message">
             <img class="avatar d-flex align-self-start mr-3" src="/icons/`)
-		//line history.qtpl:78
+		//line history.qtpl:71
 		qw422016.E().Q(msg.UserAvatarIcon)
-		//line history.qtpl:78
+		//line history.qtpl:71
 		qw422016.N().S(`" alt="no avatar">
             <div class="media-body">
               <h5 class="mt-0"><a href="/profile/`)
-		//line history.qtpl:80
+		//line history.qtpl:73
 		qw422016.E().Q(msg.UserName)
-		//line history.qtpl:80
+		//line history.qtpl:73
 		qw422016.N().S(`">`)
-		//line history.qtpl:80
+		//line history.qtpl:73
 		qw422016.E().Q(msg.UserDisplayName)
-		//line history.qtpl:80
+		//line history.qtpl:73
 		qw422016.N().S(`@`)
-		//line history.qtpl:80
+		//line history.qtpl:73
 		qw422016.E().Q(msg.UserName)
-		//line history.qtpl:80
+		//line history.qtpl:73
 		qw422016.N().S(`</a></h5>
               <p class="content">`)
-		//line history.qtpl:81
-		qw422016.E().Q(msg.MessageContext)
-		//line history.qtpl:81
+		//line history.qtpl:74
+		qw422016.E().Q(msg.MessageContent)
+		//line history.qtpl:74
 		qw422016.N().S(`</p>
               <p class="message-date">`)
-		//line history.qtpl:82
+		//line history.qtpl:75
 		qw422016.E().V(msg.MessageCreatedAt.Format("2006/01/02 15:04:05"))
-		//line history.qtpl:82
+		//line history.qtpl:75
 		qw422016.N().S(`</p>
             </div>
           </div>
         `)
-		//line history.qtpl:85
+		//line history.qtpl:78
 	}
-	//line history.qtpl:85
+	//line history.qtpl:78
 	qw422016.N().S(`
       </div>
 
       <nav>
         <ul class="pagination">
           `)
-	//line history.qtpl:90
+	//line history.qtpl:83
 	if h.Page != 1 {
-		//line history.qtpl:90
+		//line history.qtpl:83
 		qw422016.N().S(`
             <li><a href="/history/`)
-		//line history.qtpl:91
+		//line history.qtpl:84
 		qw422016.E().V(h.ChannelID)
-		//line history.qtpl:91
+		//line history.qtpl:84
 		qw422016.N().S(`?page=`)
-		//line history.qtpl:91
+		//line history.qtpl:84
 		qw422016.E().V((h.Page - 1))
-		//line history.qtpl:91
+		//line history.qtpl:84
 		qw422016.N().S(`"><span>«</span></a></li>
           `)
-		//line history.qtpl:92
+		//line history.qtpl:85
 	}
-	//line history.qtpl:92
+	//line history.qtpl:85
 	qw422016.N().S(`
 
           `)
-	//line history.qtpl:94
+	//line history.qtpl:87
 	for p := int64(1); p <= h.MaxPage; p++ {
-		//line history.qtpl:94
+		//line history.qtpl:87
 		qw422016.N().S(`
             `)
-		//line history.qtpl:95
+		//line history.qtpl:88
 		if p == h.Page {
-			//line history.qtpl:95
+			//line history.qtpl:88
 			qw422016.N().S(`
               <li class="active">
             `)
-			//line history.qtpl:97
+			//line history.qtpl:90
 		} else {
-			//line history.qtpl:97
+			//line history.qtpl:90
 			qw422016.N().S(`
               <li>
             `)
-			//line history.qtpl:99
+			//line history.qtpl:92
 		}
-		//line history.qtpl:99
+		//line history.qtpl:92
 		qw422016.N().S(`
                 <a href="/history/`)
-		//line history.qtpl:100
+		//line history.qtpl:93
 		qw422016.E().V(h.ChannelID)
-		//line history.qtpl:100
+		//line history.qtpl:93
 		qw422016.N().S(`?page=`)
-		//line history.qtpl:100
+		//line history.qtpl:93
 		qw422016.E().V(p)
-		//line history.qtpl:100
+		//line history.qtpl:93
 		qw422016.N().S(`">
                   `)
-		//line history.qtpl:101
+		//line history.qtpl:94
 		qw422016.E().V(p)
-		//line history.qtpl:101
+		//line history.qtpl:94
 		qw422016.N().S(`
                 </a>
               </li>
           `)
-		//line history.qtpl:104
+		//line history.qtpl:97
 	}
-	//line history.qtpl:104
+	//line history.qtpl:97
 	qw422016.N().S(`
 
           `)
-	//line history.qtpl:106
+	//line history.qtpl:99
 	if h.Page != h.MaxPage {
-		//line history.qtpl:106
+		//line history.qtpl:99
 		qw422016.N().S(`
             <li><a href="/history/`)
-		//line history.qtpl:107
+		//line history.qtpl:100
 		qw422016.E().V(h.ChannelID)
-		//line history.qtpl:107
+		//line history.qtpl:100
 		qw422016.N().S(`?page=`)
-		//line history.qtpl:107
+		//line history.qtpl:100
 		qw422016.E().V((h.Page + 1))
-		//line history.qtpl:107
+		//line history.qtpl:100
 		qw422016.N().S(`"><span>»</span></a></li>
           `)
-		//line history.qtpl:108
+		//line history.qtpl:101
 	}
-	//line history.qtpl:108
+	//line history.qtpl:101
 	qw422016.N().S(`
         </ul>
       </nav>
@@ -296,31 +261,31 @@ func (h HistoryView) StreamHTML(qw422016 *qt422016.Writer) {
     </main>
 </div></div></body></html>
 `)
-//line history.qtpl:114
+//line history.qtpl:107
 }
 
-//line history.qtpl:114
+//line history.qtpl:107
 func (h HistoryView) WriteHTML(qq422016 qtio422016.Writer) {
-	//line history.qtpl:114
+	//line history.qtpl:107
 	qw422016 := qt422016.AcquireWriter(qq422016)
-	//line history.qtpl:114
+	//line history.qtpl:107
 	h.StreamHTML(qw422016)
-	//line history.qtpl:114
+	//line history.qtpl:107
 	qt422016.ReleaseWriter(qw422016)
-//line history.qtpl:114
+//line history.qtpl:107
 }
 
-//line history.qtpl:114
+//line history.qtpl:107
 func (h HistoryView) HTML() string {
-	//line history.qtpl:114
+	//line history.qtpl:107
 	qb422016 := qt422016.AcquireByteBuffer()
-	//line history.qtpl:114
+	//line history.qtpl:107
 	h.WriteHTML(qb422016)
-	//line history.qtpl:114
+	//line history.qtpl:107
 	qs422016 := string(qb422016.B)
-	//line history.qtpl:114
+	//line history.qtpl:107
 	qt422016.ReleaseByteBuffer(qb422016)
-	//line history.qtpl:114
+	//line history.qtpl:107
 	return qs422016
-//line history.qtpl:114
+//line history.qtpl:107
 }

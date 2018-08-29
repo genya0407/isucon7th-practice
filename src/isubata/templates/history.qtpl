@@ -38,17 +38,12 @@ type HistoryView struct {
 
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
       <ul class="nav navbar-nav ml-auto">
-        {% if h.ChannelID != 0 %}
-          <li class="nav-item"><a href="/history/{%v h.ChannelID %}" class="nav-link">チャットログ</a></li>
-        {% endif %}
-        {% if h.User %}
-          <li class="nav-item"><a href="/add_channel" class="nav-link">チャンネル追加</a></li>
-          <li class="nav-item"><a href="/profile/{%q h.UserName %}" class="nav-link">{%q h.UserDisplayName %}</a></li>
-          <li class="nav-item"><a href="/logout" class="nav-link">ログアウト</a></li>
-        {% else %}
-          <li><a href="/register" class="nav-link">新規登録</a></li>
-          <li><a href="/login" class="nav-link">ログイン</a></li>
-        {% endif %}
+        <li class="nav-item"><a href="/history/{%v h.ChannelID %}" class="nav-link">チャットログ</a></li>
+        <li class="nav-item"><a href="/add_channel" class="nav-link">チャンネル追加</a></li>
+        <li class="nav-item"><a href="/profile/{%q h.User.Name %}" class="nav-link">{%q h.User.DisplayName %}</a></li>
+        <li class="nav-item"><a href="/logout" class="nav-link">ログアウト</a></li>
+        <li><a href="/register" class="nav-link">新規登録</a></li>
+        <li><a href="/login" class="nav-link">ログイン</a></li>
       </ul>
     </div>
   </nav>
@@ -56,19 +51,17 @@ type HistoryView struct {
   <div class="container-fluid">
   <div class="row">
     <nav class="col-sm-3 col-md-3 hidden-xs-down bg-faded sidebar">
-      {% if h.User %}
-        <ul class="nav nav-pills flex-column">
-          {% for _, ch := range h.Channels %}
-            <li class="nav-item">
-              <a class="nav-link justify-content-between {% if h.ChannelID == ch.ID %} active {% endif %}"
-                 href="/channel/{%v ch.ID %}">
-                  {%q ch.Name %}
-                <span class="badge badge-pill badge-primary float-right" id="unread-{%v ch.ID %}"></span>
-              </a>
-            </li>
-          {% endfor %}
-        </ul>
-      {% endif %}
+      <ul class="nav nav-pills flex-column">
+        {% for _, ch := range h.Channels %}
+          <li class="nav-item">
+            <a class="nav-link justify-content-between {% if h.ChannelID == ch.ID %} active {% endif %}"
+               href="/channel/{%v ch.ID %}">
+                {%q ch.Name %}
+              <span class="badge badge-pill badge-primary float-right" id="unread-{%v ch.ID %}"></span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
     </nav>
     <main class="col-sm-9 offset-sm-3 col-md-9 offset-md-3 pt-3">
 
@@ -78,7 +71,7 @@ type HistoryView struct {
             <img class="avatar d-flex align-self-start mr-3" src="/icons/{%q msg.UserAvatarIcon %}" alt="no avatar">
             <div class="media-body">
               <h5 class="mt-0"><a href="/profile/{%q msg.UserName %}">{%q msg.UserDisplayName %}@{%q msg.UserName %}</a></h5>
-              <p class="content">{%q msg.MessageContext %}</p>
+              <p class="content">{%q msg.MessageContent %}</p>
               <p class="message-date">{%v msg.MessageCreatedAt.Format("2006/01/02 15:04:05") %}</p>
             </div>
           </div>

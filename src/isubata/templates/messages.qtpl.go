@@ -7,94 +7,93 @@ package templates
 //line messages.qtpl:1
 import (
 	"isubata/types"
-	"time"
 )
 
-//line messages.qtpl:6
+//line messages.qtpl:5
 import (
 	qtio422016 "io"
 
 	qt422016 "github.com/valyala/quicktemplate"
 )
 
-//line messages.qtpl:6
+//line messages.qtpl:5
 var (
 	_ = qtio422016.Copy
 	_ = qt422016.AcquireByteBuffer
 )
 
-//line messages.qtpl:7
+//line messages.qtpl:6
 type MessageMarshaler struct {
 	Msgs []types.MessageWithUser
 }
 
-//line messages.qtpl:13
+//line messages.qtpl:12
 func (mm MessageMarshaler) StreamJSON(qw422016 *qt422016.Writer) {
-	//line messages.qtpl:13
+	//line messages.qtpl:12
 	qw422016.N().S(`[`)
-	//line messages.qtpl:15
+	//line messages.qtpl:14
 	for i, msg := range mm.Msgs {
-		//line messages.qtpl:15
+		//line messages.qtpl:14
 		qw422016.N().S(`{"content":`)
-		//line messages.qtpl:17
+		//line messages.qtpl:16
 		qw422016.N().Q(msg.MessageContent)
-		//line messages.qtpl:17
+		//line messages.qtpl:16
 		qw422016.N().S(`,"date":`)
-		//line messages.qtpl:18
+		//line messages.qtpl:17
 		qw422016.N().Q(msg.MessageCreatedAt.Format("2006/01/02 15:04:05"))
-		//line messages.qtpl:18
+		//line messages.qtpl:17
 		qw422016.N().S(`,"id":`)
-		//line messages.qtpl:19
+		//line messages.qtpl:18
 		qw422016.E().V(msg.MessageID)
-		//line messages.qtpl:19
+		//line messages.qtpl:18
 		qw422016.N().S(`,"user": {"name":`)
-		//line messages.qtpl:21
+		//line messages.qtpl:20
 		qw422016.N().Q(msg.UserName)
-		//line messages.qtpl:21
+		//line messages.qtpl:20
 		qw422016.N().S(`,"display_name":`)
-		//line messages.qtpl:22
+		//line messages.qtpl:21
 		qw422016.N().Q(msg.UserDisplayName)
-		//line messages.qtpl:22
+		//line messages.qtpl:21
 		qw422016.N().S(`,"avatar_icon":`)
-		//line messages.qtpl:23
+		//line messages.qtpl:22
 		qw422016.N().Q(msg.UserAvatarIcon)
-		//line messages.qtpl:23
+		//line messages.qtpl:22
 		qw422016.N().S(`}}`)
-		//line messages.qtpl:26
+		//line messages.qtpl:25
 		if i+1 < len(mm.Msgs) {
-			//line messages.qtpl:26
+			//line messages.qtpl:25
 			qw422016.N().S(`,`)
-			//line messages.qtpl:26
+			//line messages.qtpl:25
 		}
-		//line messages.qtpl:27
+		//line messages.qtpl:26
 	}
-	//line messages.qtpl:27
+	//line messages.qtpl:26
 	qw422016.N().S(`]`)
-//line messages.qtpl:29
+//line messages.qtpl:28
 }
 
-//line messages.qtpl:29
+//line messages.qtpl:28
 func (mm MessageMarshaler) WriteJSON(qq422016 qtio422016.Writer) {
-	//line messages.qtpl:29
+	//line messages.qtpl:28
 	qw422016 := qt422016.AcquireWriter(qq422016)
-	//line messages.qtpl:29
+	//line messages.qtpl:28
 	mm.StreamJSON(qw422016)
-	//line messages.qtpl:29
+	//line messages.qtpl:28
 	qt422016.ReleaseWriter(qw422016)
-//line messages.qtpl:29
+//line messages.qtpl:28
 }
 
-//line messages.qtpl:29
+//line messages.qtpl:28
 func (mm MessageMarshaler) JSON() string {
-	//line messages.qtpl:29
+	//line messages.qtpl:28
 	qb422016 := qt422016.AcquireByteBuffer()
-	//line messages.qtpl:29
+	//line messages.qtpl:28
 	mm.WriteJSON(qb422016)
-	//line messages.qtpl:29
+	//line messages.qtpl:28
 	qs422016 := string(qb422016.B)
-	//line messages.qtpl:29
+	//line messages.qtpl:28
 	qt422016.ReleaseByteBuffer(qb422016)
-	//line messages.qtpl:29
+	//line messages.qtpl:28
 	return qs422016
-//line messages.qtpl:29
+//line messages.qtpl:28
 }
