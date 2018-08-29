@@ -89,7 +89,7 @@ func init() {
 
 func getUser(userID int64) (*types.User, error) {
 	u := types.User{}
-	if err := db.Get(&u, "SELECT * FROM user WHERE id = ?", userID); err != nil {
+	if err := db.Get(&u, "SELECT id, name, display_name, avatar_icon FROM user WHERE id = ?", userID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
