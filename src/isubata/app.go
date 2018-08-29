@@ -569,7 +569,7 @@ func getHistory(c echo.Context) error {
 	}
 
 	channels := []types.ChannelInfo{}
-	err = db.Select(&channels, "SELECT * FROM channel ORDER BY id")
+	err = db.Select(&channels, "SELECT id, name FROM channel ORDER BY id")
 	if err != nil {
 		return err
 	}
