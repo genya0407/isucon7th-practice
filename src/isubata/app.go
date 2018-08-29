@@ -505,7 +505,7 @@ func fetchUnread(c echo.Context) error {
 		Cnt       int64 `db:"cnt"`
 	}
 
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 100)
 
 	counts := []Count{}
 	err := db.Select(&counts,
