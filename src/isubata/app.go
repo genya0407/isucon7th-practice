@@ -522,7 +522,9 @@ func fetchUnread(c echo.Context) error {
 		resp = append(resp, r)
 	}
 
-	<-t.C
+	if len(counts) < 10 {
+		<-t.C
+	}
 	t.Stop()
 
 	return c.JSON(http.StatusOK, resp)
