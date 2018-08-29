@@ -40,7 +40,7 @@ type HistoryView struct {
       <ul class="nav navbar-nav ml-auto">
         <li class="nav-item"><a href="/history/{%v h.ChannelID %}" class="nav-link">チャットログ</a></li>
         <li class="nav-item"><a href="/add_channel" class="nav-link">チャンネル追加</a></li>
-        <li class="nav-item"><a href="/profile/{%q h.User.Name %}" class="nav-link">{%q h.User.DisplayName %}</a></li>
+        <li class="nav-item"><a href="/profile/{%q= h.User.Name %}" class="nav-link">{%q= h.User.DisplayName %}</a></li>
         <li class="nav-item"><a href="/logout" class="nav-link">ログアウト</a></li>
         <li><a href="/register" class="nav-link">新規登録</a></li>
         <li><a href="/login" class="nav-link">ログイン</a></li>
@@ -56,7 +56,7 @@ type HistoryView struct {
           <li class="nav-item">
             <a class="nav-link justify-content-between {% if h.ChannelID == ch.ID %} active {% endif %}"
                href="/channel/{%v ch.ID %}">
-                {%q ch.Name %}
+                {%q= ch.Name %}
               <span class="badge badge-pill badge-primary float-right" id="unread-{%v ch.ID %}"></span>
             </a>
           </li>
@@ -68,10 +68,10 @@ type HistoryView struct {
       <div id="history">
         {% for _, msg := range h.Messages %}
           <div class="media message">
-            <img class="avatar d-flex align-self-start mr-3" src="/icons/{%q msg.UserAvatarIcon %}" alt="no avatar">
+            <img class="avatar d-flex align-self-start mr-3" src="/icons/{%q= msg.UserAvatarIcon %}" alt="no avatar">
             <div class="media-body">
-              <h5 class="mt-0"><a href="/profile/{%q msg.UserName %}">{%q msg.UserDisplayName %}@{%q msg.UserName %}</a></h5>
-              <p class="content">{%q msg.MessageContent %}</p>
+              <h5 class="mt-0"><a href="/profile/{%q= msg.UserName %}">{%q= msg.UserDisplayName %}@{%q= msg.UserName %}</a></h5>
+              <p class="content">{%q= msg.MessageContent %}</p>
               <p class="message-date">{%v msg.MessageCreatedAt.Format("2006/01/02 15:04:05") %}</p>
             </div>
           </div>

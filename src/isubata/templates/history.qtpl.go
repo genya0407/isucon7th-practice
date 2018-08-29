@@ -66,11 +66,11 @@ func (h HistoryView) StreamHTML(qw422016 *qt422016.Writer) {
         <li class="nav-item"><a href="/add_channel" class="nav-link">チャンネル追加</a></li>
         <li class="nav-item"><a href="/profile/`)
 	//line history.qtpl:43
-	qw422016.E().Q(h.User.Name)
+	qw422016.N().Q(h.User.Name)
 	//line history.qtpl:43
 	qw422016.N().S(`" class="nav-link">`)
 	//line history.qtpl:43
-	qw422016.E().Q(h.User.DisplayName)
+	qw422016.N().Q(h.User.DisplayName)
 	//line history.qtpl:43
 	qw422016.N().S(`</a></li>
         <li class="nav-item"><a href="/logout" class="nav-link">ログアウト</a></li>
@@ -106,7 +106,7 @@ func (h HistoryView) StreamHTML(qw422016 *qt422016.Writer) {
 		qw422016.N().S(`">
                 `)
 		//line history.qtpl:59
-		qw422016.E().Q(ch.Name)
+		qw422016.N().Q(ch.Name)
 		//line history.qtpl:59
 		qw422016.N().S(`
               <span class="badge badge-pill badge-primary float-right" id="unread-`)
@@ -134,26 +134,26 @@ func (h HistoryView) StreamHTML(qw422016 *qt422016.Writer) {
           <div class="media message">
             <img class="avatar d-flex align-self-start mr-3" src="/icons/`)
 		//line history.qtpl:71
-		qw422016.E().Q(msg.UserAvatarIcon)
+		qw422016.N().Q(msg.UserAvatarIcon)
 		//line history.qtpl:71
 		qw422016.N().S(`" alt="no avatar">
             <div class="media-body">
               <h5 class="mt-0"><a href="/profile/`)
 		//line history.qtpl:73
-		qw422016.E().Q(msg.UserName)
+		qw422016.N().Q(msg.UserName)
 		//line history.qtpl:73
 		qw422016.N().S(`">`)
 		//line history.qtpl:73
-		qw422016.E().Q(msg.UserDisplayName)
+		qw422016.N().Q(msg.UserDisplayName)
 		//line history.qtpl:73
 		qw422016.N().S(`@`)
 		//line history.qtpl:73
-		qw422016.E().Q(msg.UserName)
+		qw422016.N().Q(msg.UserName)
 		//line history.qtpl:73
 		qw422016.N().S(`</a></h5>
               <p class="content">`)
 		//line history.qtpl:74
-		qw422016.E().Q(msg.MessageContent)
+		qw422016.N().Q(msg.MessageContent)
 		//line history.qtpl:74
 		qw422016.N().S(`</p>
               <p class="message-date">`)
