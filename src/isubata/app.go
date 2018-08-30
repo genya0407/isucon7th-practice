@@ -708,62 +708,36 @@ func postProfile(c echo.Context) error {
 		return err
 	}
 
-	avatarName := ""
-	var avatarData []byte
+	go func() {
+		avatarName := ""
+		var avatarData []byte
 
-	fh, err := c.FormFile("avatar_icon")
-	if err == http.ErrMissingFile {
-		// no file upload
-	} else if err != nil {
-		return err
-	} else {
-		dotPos := strings.LastIndexByte(fh.Filename, '.')
-		if dotPos < 0 {
-			return ErrBadReqeust
-		}
-		ext := fh.Filename[dotPos:]
-		switch ext {
-		case ".jpg", ".jpeg", ".png", ".gif":
-			break
-		default:
-			return ErrBadReqeust
+		fh, err := c.FormFile("avatar_icon")
+		if err == http.ErrMissingFile {
+			// no file upload
+		} else {
+			dotPos := strings.LastIndexByte(fh.Filename, '.')
+			ext := fh.Filename[dotPos:]
+
+			file, _ := fh.Open()
+			avatarData, _ = ioutil.ReadAll(file)
+			file.Close()
+
+			avatarName = fmt.Sprintf("%x%s", sha1.Sum(avatarData), ext)
 		}
 
-		file, err := fh.Open()
-		if err != nil {
-			return err
-		}
-		avatarData, _ = ioutil.ReadAll(file)
-		file.Close()
+		if avatarName != "" && len(avatarData) > 0 {
+			file, _ := os.Create("/home/isucon/isubata/webapp/autofs/icons/" + avatarName)
+			defer file.Close()
+			file.Write(avatarData)
 
-		if len(avatarData) > avatarMaxBytes {
-			return ErrBadReqeust
+			db.Exec("UPDATE user SET avatar_icon = ? WHERE id = ?", avatarName, self.ID)
 		}
 
-		avatarName = fmt.Sprintf("%x%s", sha1.Sum(avatarData), ext)
-	}
-
-	if avatarName != "" && len(avatarData) > 0 {
-		file, err := os.Create("/home/isucon/isubata/webapp/autofs/icons/" + avatarName)
-		if err != nil {
-			fmt.Println("Error creating autofs file!!!!!!!")
-			return err
+		if name := c.FormValue("display_name"); name != "" {
+			db.Exec("UPDATE user SET display_name = ? WHERE id = ?", name, self.ID)
 		}
-		defer file.Close()
-		file.Write(avatarData)
-
-		_, err = db.Exec("UPDATE user SET avatar_icon = ? WHERE id = ?", avatarName, self.ID)
-		if err != nil {
-			return err
-		}
-	}
-
-	if name := c.FormValue("display_name"); name != "" {
-		_, err := db.Exec("UPDATE user SET display_name = ? WHERE id = ?", name, self.ID)
-		if err != nil {
-			return err
-		}
-	}
+	}()
 
 	return c.Redirect(http.StatusSeeOther, "/")
 }
