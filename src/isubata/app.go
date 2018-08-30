@@ -721,6 +721,7 @@ func postProfile(c echo.Context) error {
 	part, err := mr.NextPart()
 	avatarData, _ = ioutil.ReadAll(part)
 	filename := part.FileName()
+	fmt.Println(filename)
 	dotPos := strings.LastIndexByte(filename, '.')
 	if dotPos < 0 {
 		return ErrBadReqeust
