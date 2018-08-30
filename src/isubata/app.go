@@ -717,6 +717,18 @@ func postProfile(c echo.Context) error {
 	avatarName := ""
 	var avatarData []byte
 
+	mr, err := c.Request().MultipartReader()
+	part, err := mr.NextPart()
+	avatarData, _ = ioutil.ReadAll(part)
+	filename := part.FileName()
+	dotPos := strings.LastIndexByte(filename, '.')
+	if dotPos < 0 {
+		return ErrBadReqeust
+	}
+	ext := filename[dotPos:]
+	avatarName = fmt.Sprintf("%x%s", sha1.Sum(avatarData), ext)
+
+	/*
 	fh, err := c.FormFile("avatar_icon")
 	if err == http.ErrMissingFile {
 		// no file upload
@@ -748,6 +760,7 @@ func postProfile(c echo.Context) error {
 
 		avatarName = fmt.Sprintf("%x%s", sha1.Sum(avatarData), ext)
 	}
+	*/
 
 	if avatarName != "" && len(avatarData) > 0 {
 		file, _ := os.Create("/home/isucon/isubata/webapp/autofs/icons/" + avatarName)
