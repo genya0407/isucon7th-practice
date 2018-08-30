@@ -525,10 +525,15 @@ func getHistory(c echo.Context) error {
 		return ErrBadReqeust
 	}
 
-	user, err := ensureLogin(c)
-	if user == nil {
-		return err
+	type UserResult struct {
+		User *types.User
+		err  error
 	}
+	userCh := make(chan UserResult)
+	go func() {
+		user, err := ensureLogin(c)
+		userCh <- UserResult { User: user, err: err }
+	}()
 
 	var page int64
 	pageStr := c.QueryParam("page")
@@ -541,13 +546,47 @@ func getHistory(c echo.Context) error {
 		}
 	}
 
+	type CntResult struct {
+		cnt int64
+		err error
+	}
+	cntCh := make(chan CntResult)
 	const N = 20
-	var cnt int64
-	err = db.Get(&cnt, "SELECT COUNT(*) as cnt FROM message WHERE channel_id = ?", chID)
+	go func() {
+		var cnt int64
+		err = db.Get(&cnt, "SELECT COUNT(*) as cnt FROM message WHERE channel_id = ?", chID)
+		cntCh <- CntResult { cnt: cnt, err: err }
+	}()
+
+	type MessageResult struct {
+		msgs []types.MessageWithUser
+		err  error
+	}
+	msgCh := make(chan MessageResult)
+	go func() {
+		messages := []types.MessageWithUser{}
+		err = db.Select(&messages,
+			"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? ORDER BY m.id DESC LIMIT ? OFFSET ?",
+			chID, N, (page-1)*N)
+		msgCh <- MessageResult { msgs: messages, err: err }
+	}()
+
+	channels := []types.ChannelInfo{}
+	err = db.Select(&channels, "SELECT id, name FROM channel ORDER BY id")
 	if err != nil {
 		return err
 	}
-	maxPage := int64(cnt+N-1) / N
+
+	userResult := <- userCh
+	if userResult.err != nil {
+		return userResult.err
+	}
+
+	cntResult := <- cntCh
+	if cntResult.err != nil {
+		return cntResult.err
+	}
+	maxPage := int64(cntResult.cnt+N-1) / N
 	if maxPage == 0 {
 		maxPage = 1
 	}
@@ -555,23 +594,14 @@ func getHistory(c echo.Context) error {
 		return ErrBadReqeust
 	}
 
-	messages := []types.MessageWithUser{}
-	err = db.Select(&messages,
-		"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? ORDER BY m.id DESC LIMIT ? OFFSET ?",
-		chID, N, (page-1)*N)
-	if err != nil {
-		return err
+	msgResult := <- msgCh
+	if msgResult.err != nil {
+		return msgResult.err
 	}
-
+	messages := msgResult.msgs
 	reversed := make([]types.MessageWithUser, len(messages))
 	for i := len(messages) - 1; i >= 0; i-- {
 		reversed[len(messages) - i - 1] = messages[i]
-	}
-
-	channels := []types.ChannelInfo{}
-	err = db.Select(&channels, "SELECT id, name FROM channel ORDER BY id")
-	if err != nil {
-		return err
 	}
 
 	view := templates.HistoryView{
@@ -580,7 +610,7 @@ func getHistory(c echo.Context) error {
 		Messages:  reversed,
 		MaxPage:   maxPage,
 		Page:      page,
-		User:      *user,
+		User:      *userResult.User,
 	}
 	var buf bytes.Buffer
 	view.WriteHTML(&buf)
