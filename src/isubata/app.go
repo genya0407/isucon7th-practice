@@ -563,9 +563,9 @@ func getHistory(c echo.Context) error {
 		return err
 	}
 
-	reversed := []types.MessageWithUser{}
+	reversed := make([]types.MessageWithUser, len(messages))
 	for i := len(messages) - 1; i >= 0; i-- {
-		reversed = append(reversed, messages[i])
+		reversed[len(messages) - i - 1] = messages[i]
 	}
 
 	channels := []types.ChannelInfo{}
