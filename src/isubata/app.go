@@ -708,6 +708,12 @@ func postProfile(c echo.Context) error {
 		return err
 	}
 
+	go func() {
+		if name := c.FormValue("display_name"); name != "" {
+			db.Exec("UPDATE user SET display_name = ? WHERE id = ?", name, self.ID)
+		}
+	}()
+
 	avatarName := ""
 	var avatarData []byte
 
@@ -743,19 +749,13 @@ func postProfile(c echo.Context) error {
 		avatarName = fmt.Sprintf("%x%s", sha1.Sum(avatarData), ext)
 	}
 
-	go func() {
-		if avatarName != "" && len(avatarData) > 0 {
-			file, _ := os.Create("/home/isucon/isubata/webapp/autofs/icons/" + avatarName)
-			defer file.Close()
-			file.Write(avatarData)
+	if avatarName != "" && len(avatarData) > 0 {
+		file, _ := os.Create("/home/isucon/isubata/webapp/autofs/icons/" + avatarName)
+		defer file.Close()
+		file.Write(avatarData)
 
-			db.Exec("UPDATE user SET avatar_icon = ? WHERE id = ?", avatarName, self.ID)
-		}
-
-		if name := c.FormValue("display_name"); name != "" {
-			db.Exec("UPDATE user SET display_name = ? WHERE id = ?", name, self.ID)
-		}
-	}()
+		db.Exec("UPDATE user SET avatar_icon = ? WHERE id = ?", avatarName, self.ID)
+	}
 
 	return c.Redirect(http.StatusSeeOther, "/")
 }
