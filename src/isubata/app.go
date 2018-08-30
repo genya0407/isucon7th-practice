@@ -578,7 +578,7 @@ func getHistory(c echo.Context) error {
 	}
 
 	userResult := <- userCh
-	if userResult.err != nil {
+	if userResult.User == nil {
 		return userResult.err
 	}
 
