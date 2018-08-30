@@ -533,6 +533,7 @@ func getHistory(c echo.Context) error {
 	go func() {
 		user, err := ensureLogin(c)
 		userCh <- UserResult { User: user, err: err }
+		close(userCh)
 	}()
 
 	var page int64
@@ -556,6 +557,7 @@ func getHistory(c echo.Context) error {
 		var cnt int64
 		err = db.Get(&cnt, "SELECT COUNT(*) as cnt FROM message WHERE channel_id = ?", chID)
 		cntCh <- CntResult { cnt: cnt, err: err }
+		close(cntCh)
 	}()
 
 	type MessageResult struct {
@@ -569,6 +571,7 @@ func getHistory(c echo.Context) error {
 			"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? ORDER BY m.id DESC LIMIT ? OFFSET ?",
 			chID, N, (page-1)*N)
 		msgCh <- MessageResult { msgs: messages, err: err }
+		close(msgCh)
 	}()
 
 	channels := []types.ChannelInfo{}
