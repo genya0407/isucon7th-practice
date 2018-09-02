@@ -384,7 +384,6 @@ func queryMessagesWithUser(userID, chanID, lastID int64) ([]types.MessageWithUse
 	rows, err := tx.Queryx(
 		"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? AND m.id > ? ORDER BY m.id DESC LIMIT 100",
 		chanID, lastID)
-	defer rows.Close()
 	if err != nil {
 		tx.Rollback()
 		return nil, err
