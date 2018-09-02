@@ -451,6 +451,10 @@ func getMessage(c echo.Context) error {
 
 	messages, err := queryMessagesWithUser(userID, chanID, lastID)
 	if err != nil {
+		debugInfoAddCh <- map[string]interface{}{
+			"Event": "query_messages_with_user_failed",
+			"Error": err,
+		}
 		return err
 	}
 
