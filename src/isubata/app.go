@@ -213,6 +213,7 @@ func getInitialize(c echo.Context) error {
 	db.MustExec("DELETE FROM user WHERE id > 1000")
 	db.MustExec("DELETE FROM channel WHERE id > 10")
 	db.MustExec("DELETE FROM message WHERE id > 10000")
+	db.MustExec("UPDATE channel as c LEFT JOIN ( SELECT m.channel_id, COUNT(m.id) as msg_cnt FROM message as m GROUP BY m.channel_id) as m_c ON c.id = m_c.channel_id SET c.cnt = COALESCE(m_c.msg_cnt, 0)")
 	db.MustExec("DELETE FROM haveread")
 	return c.String(204, "")
 }
