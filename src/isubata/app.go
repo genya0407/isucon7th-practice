@@ -147,6 +147,7 @@ func sessUserID(c echo.Context) int64 {
 			"Event": "sess_values_not_ok",
 			"Time": time.Now(),
 			"X": x,
+			"Session": sess,
 		}		
 	}
 	return userID
