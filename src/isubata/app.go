@@ -143,16 +143,16 @@ func sessUserID(c echo.Context) int64 {
 	if x, ok := sess.Values["user_id"]; ok {
 		userID, _ = x.(int64)
 	} else {
-	    keys := make([]interface{}, len(sess.Values))
-	    for k := range sess.Values {
-	        keys = append(keys, k)
-	    }
+		var cookies map[string]string
+		for _, cook := range c.Cookies() {
+			cookies[cook.Name] = cook.Value
+		}
 
 		debugInfoAddCh <- map[string]interface{}{
 			"Event": "sess_values_not_ok",
 			"Time": time.Now(),
 			"X": x,
-			"Session": keys,
+			"Cookies": cookies,
 		}		
 	}
 	return userID
