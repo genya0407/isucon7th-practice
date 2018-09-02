@@ -668,7 +668,7 @@ func postAddChannel(c echo.Context) error {
 	}
 
 	res, err := db.Exec(
-		"INSERT INTO channel (name, description, updated_at, created_at) VALUES (?, ?, NOW(), NOW())",
+		"INSERT INTO channel (name, description, updated_at, created_at, cnt) VALUES (?, ?, NOW(), NOW(), 0)",
 		name, desc)
 	if err != nil {
 		return err
