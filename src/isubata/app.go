@@ -477,7 +477,7 @@ func fetchUnread(c echo.Context) error {
 
 	counts := []Count{}
 	err := db.Select(&counts,
-		"SELECT c.id as channel_id, (c.cnt - h.read_count) as cnt FROM channel as c LEFT OUTER JOIN haveread as h ON c.id = h.channel_id")
+		"SELECT c.id as channel_id, (c.cnt - COALESCE(h.read_count, 0)) as cnt FROM channel as c LEFT OUTER JOIN haveread as h ON c.id = h.channel_id")
 	if err != nil {
 		return err
 	}
