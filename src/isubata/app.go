@@ -105,6 +105,9 @@ func addMessage(channelID, userID int64, content string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+
+	go db.Exec("UPDATE channel SET cnt = cnt + 1 WHERE id = ?", channelID)
+
 	return res.LastInsertId()
 }
 
@@ -426,10 +429,10 @@ func getMessage(c echo.Context) error {
 
 	go func() {
 		if len(messages) > 0 {
-			db.Exec("INSERT INTO haveread (user_id, channel_id, message_id, updated_at, created_at)"+
+			db.Exec("INSERT INTO haveread (user_id, channel_id, read_count, updated_at, created_at)"+
 				" VALUES (?, ?, ?, NOW(), NOW())"+
-				" ON DUPLICATE KEY UPDATE message_id = ?, updated_at = NOW()",
-				userID, chanID, messages[0].MessageID, messages[0].MessageID)
+				" ON DUPLICATE KEY UPDATE read_count = read_count + ?, updated_at = NOW()",
+				userID, chanID, len(messages), len(messages))
 		}
 	}()
 
@@ -442,33 +445,6 @@ func getMessage(c echo.Context) error {
 	marshaler.WriteJSON(&buf)
 
 	return c.JSONBlob(http.StatusOK, buf.Bytes())
-}
-
-func queryChannels() ([]int64, error) {
-	res := []int64{}
-	err := db.Select(&res, "SELECT id FROM channel")
-	return res, err
-}
-
-func queryHaveRead(userID, chID int64) (int64, error) {
-	type HaveRead struct {
-		UserID    int64     `db:"user_id"`
-		ChannelID int64     `db:"channel_id"`
-		MessageID int64     `db:"message_id"`
-		UpdatedAt time.Time `db:"updated_at"`
-		CreatedAt time.Time `db:"created_at"`
-	}
-	var messageID int64
-
-	err := db.Get(&messageID, "SELECT message_id FROM haveread WHERE user_id = ? AND channel_id = ?",
-		userID, chID)
-
-	if err == sql.ErrNoRows {
-		return 0, nil
-	} else if err != nil {
-		return 0, err
-	}
-	return messageID, nil
 }
 
 var lastFetchedAtByUser = map[int64]time.Time{}
@@ -500,8 +476,7 @@ func fetchUnread(c echo.Context) error {
 
 	counts := []Count{}
 	err := db.Select(&counts,
-		"SELECT m.channel_id, COUNT(m.id) AS cnt FROM message as m LEFT OUTER JOIN (SELECT channel_id, message_id FROM haveread WHERE user_id = ?) AS h ON m.channel_id = h.channel_id WHERE m.id > h.message_id OR h.message_id IS NULL GROUP BY m.channel_id",
-		userID)
+		"SELECT c.id as channel_id, (c.cnt - h.read_count) as cnt FROM channel as c LEFT OUTER JOIN haveread as h ON c.id = h.channel_id")
 	if err != nil {
 		return err
 	}
