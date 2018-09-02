@@ -431,9 +431,9 @@ func getMessage(c echo.Context) error {
 	go func() {
 		if len(messages) > 0 {
 			db.Exec("INSERT INTO haveread (user_id, channel_id, read_count, updated_at, created_at)"+
-				" VALUES (?, ?, ?, NOW(), NOW())"+
+				" VALUES (?, ?, (SELECT cnt FROM channel WHERE id = ? LIMIT 1), NOW(), NOW())"+
 				" ON DUPLICATE KEY UPDATE read_count = read_count + ?, updated_at = NOW()",
-				userID, chanID, len(messages), len(messages))
+				userID, chanID, chanID, len(messages))
 		}
 	}()
 
