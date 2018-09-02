@@ -484,7 +484,17 @@ func fetchUnread(c echo.Context) error {
 		Cnt       int64 `db:"cnt"`
 	}
 
-	time.Sleep(time.Second)
+	lastFetchedAt, ok := lastFetchedAtByUser[userID]
+	if ok {
+		now := time.Now()
+		shouldFetchedAt := lastFetchedAt.Add(time.Duration(9) * time.Second)
+		if shouldFetchedAt.Before(now) {
+			// immediate return
+		} else {
+			// sleep untile `shouldFetchedAt`
+			time.Sleep(shouldFetchedAt.Sub(now))
+		}
+	}
 
 	counts := []Count{}
 	err := db.Select(&counts,
@@ -500,18 +510,6 @@ func fetchUnread(c echo.Context) error {
 			"channel_id": c.ChannelID,
 			"unread":     c.Cnt}
 		resp = append(resp, r)
-	}
-
-	lastFetchedAt, ok := lastFetchedAtByUser[userID]
-	if ok {
-		now := time.Now()
-		shouldFetchedAt := lastFetchedAt.Add(time.Duration(9) * time.Second)
-		if shouldFetchedAt.Before(now) {
-			// immediate return
-		} else {
-			// sleep untile `shouldFetchedAt`
-			time.Sleep(shouldFetchedAt.Sub(now))
-		}
 	}
 
 	lastFetchedAtByUser[userID] = time.Now()
