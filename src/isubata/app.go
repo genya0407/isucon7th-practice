@@ -484,6 +484,7 @@ func fetchUnread(c echo.Context) error {
 		Cnt       int64 `db:"cnt"`
 	}
 
+	/*
 	lastFetchedAt, ok := lastFetchedAtByUser[userID]
 	if ok {
 		now := time.Now()
@@ -495,6 +496,7 @@ func fetchUnread(c echo.Context) error {
 			time.Sleep(shouldFetchedAt.Sub(now))
 		}
 	}
+	*/
 
 	counts := []Count{}
 	err := db.Select(&counts,
