@@ -379,14 +379,39 @@ func jsonifyMessage(m Message) (map[string]interface{}, error) {
 	return r, nil
 }
 
-func queryMessagesWithUser(chanID, lastID int64) ([]types.MessageWithUser, error) {
+func queryMessagesWithUser(userID, chanID, lastID int64) ([]types.MessageWithUser, error) {
 	msgs := []types.MessageWithUser{}
-	err := db.Select(&msgs,
-		"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? AND m.id > ? ORDER BY m.id DESC LIMIT 100",
-		chanID, lastID)
+
+	tx, err := db.Beginx()
 	if err != nil {
 		return nil, err
 	}
+
+	rows, err := tx.Queryx(
+		"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? AND m.id > ? ORDER BY m.id DESC LIMIT 100",
+		chanID, lastID)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	for rows.Next() {
+		var msg types.MessageWithUser
+		rows.StructScan(&msg)
+		msgs = append(msgs, msg)
+	}
+
+	_, err = tx.Exec("INSERT INTO haveread (user_id, channel_id, read_count, updated_at, created_at)"+
+		" VALUES (?, ?, (SELECT cnt FROM channel WHERE id = ? LIMIT 1), NOW(), NOW())"+
+		" ON DUPLICATE KEY UPDATE read_count = (SELECT cnt FROM channel WHERE id = ? LIMIT 1), updated_at = NOW()",
+		userID, chanID, chanID, chanID)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	tx.Commit()
+
 	return msgs, nil
 }
 
@@ -423,19 +448,10 @@ func getMessage(c echo.Context) error {
 		return err
 	}
 
-	messages, err := queryMessagesWithUser(chanID, lastID)
+	messages, err := queryMessagesWithUser(userID, chanID, lastID)
 	if err != nil {
 		return err
 	}
-
-	go func() {
-		if len(messages) > 0 {
-			db.Exec("INSERT INTO haveread (user_id, channel_id, read_count, updated_at, created_at)"+
-				" VALUES (?, ?, (SELECT cnt FROM channel WHERE id = ? LIMIT 1), NOW(), NOW())"+
-				" ON DUPLICATE KEY UPDATE read_count = (SELECT cnt FROM channel WHERE id = ? LIMIT 1), updated_at = NOW()",
-				userID, chanID, chanID, chanID)
-		}
-	}()
 
 	reversed := []types.MessageWithUser{}
 	for i := len(messages) - 1; i >= 0; i-- {
