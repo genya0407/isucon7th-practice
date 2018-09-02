@@ -384,15 +384,10 @@ func queryMessagesWithUser(userID, chanID, lastID int64) ([]types.MessageWithUse
 	rows, err := tx.Queryx(
 		"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? AND m.id > ? ORDER BY m.id DESC LIMIT 100",
 		chanID, lastID)
+	defer rows.Close()
 	if err != nil {
 		tx.Rollback()
 		return nil, err
-	}
-
-	for rows.Next() {
-		var msg types.MessageWithUser
-		rows.StructScan(&msg)
-		msgs = append(msgs, msg)
 	}
 
 	_, err = tx.Exec("INSERT INTO haveread (user_id, channel_id, read_count, updated_at, created_at)"+
@@ -405,6 +400,12 @@ func queryMessagesWithUser(userID, chanID, lastID int64) ([]types.MessageWithUse
 	}
 
 	tx.Commit()
+
+	for rows.Next() {
+		var msg types.MessageWithUser
+		rows.StructScan(&msg)
+		msgs = append(msgs, msg)
+	}
 
 	return msgs, nil
 }
@@ -482,7 +483,7 @@ func fetchUnread(c echo.Context) error {
 	lastFetchedAt, ok := lastFetchedAtByUser[userID]
 	if ok {
 		now := time.Now()
-		shouldFetchedAt := lastFetchedAt.Add(time.Duration(5) * time.Second)
+		shouldFetchedAt := lastFetchedAt.Add(time.Duration(8) * time.Second)
 		if shouldFetchedAt.Before(now) {
 			// immediate return
 		} else {
