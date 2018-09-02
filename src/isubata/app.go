@@ -129,11 +129,25 @@ func queryMessages(chanID, lastID int64) ([]Message, error) {
 func sessUserID(c echo.Context) int64 {
 	var userID int64
 	sess, err := session.Get("session", c)
+
 	if err != nil {
+		debugInfoAddCh <- map[string]interface{}{
+			"Event": "sess_user_failed",
+			"Time": time.Now(),
+			"Error": err,
+			"Session": sess,
+		}
+
 		return 0
 	}
 	if x, ok := sess.Values["user_id"]; ok {
 		userID, _ = x.(int64)
+	} else {
+		debugInfoAddCh <- map[string]interface{}{
+			"Event": "sess_values_not_ok",
+			"Time": time.Now(),
+			"X": x,
+		}		
 	}
 	return userID
 }
