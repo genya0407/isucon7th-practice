@@ -429,6 +429,12 @@ func jsonfyMessagesWithUser(msgs []types.MessageWithUser) []map[string]interface
 func getMessage(c echo.Context) error {
 	userID := sessUserID(c)
 	if userID == 0 {
+		debugInfoAddCh <- map[string]interface{}{
+			"Event": "get_message_forbidden",
+			"Time": time.Now(),
+			"ChannelID": c.QueryParam("channel_id"),
+			"LastMessageID": c.QueryParam("last_message_id"),
+		}
 		return c.NoContent(http.StatusForbidden)
 	}
 
@@ -746,6 +752,13 @@ func postProfile(c echo.Context) error {
 	return c.Redirect(http.StatusSeeOther, "/")
 }
 
+var debugInfos []map[string]interface{}
+var debugInfoAddCh chan map[string]interface{}
+
+func getDebugInfo(c echo.Context) error {
+	return c.JSON(http.StatusOK, debugInfos)
+}
+
 func tAdd(a, b int64) int64 {
 	return a + b
 }
@@ -793,7 +806,17 @@ func main() {
 	e.GET("add_channel", getAddChannel)
 	e.POST("add_channel", postAddChannel)
 
+	e.GET("/debug.json", getDebugInfo)
+
 	echopprof.Wrap(e)
+
+	debugInfoAddCh = make(chan map[string]interface{}, 1000)
+	go func() {
+		for {
+			info := <- debugInfoAddCh
+			debugInfos = append(debugInfos, info)
+		}
+	}()
 
 	e.Start(":5000")
 }
