@@ -496,6 +496,10 @@ func fetchUnread(c echo.Context) error {
 		"SELECT c.id as channel_id, (c.cnt - COALESCE(h.read_count, 0)) as cnt FROM channel as c LEFT OUTER JOIN (SELECT * FROM haveread WHERE user_id = ?) as h ON c.id = h.channel_id",
 		userID)
 	if err != nil {
+		debugInfoAddCh <- map[string]interface{}{
+			"Event": "fetch_unread_failed",
+			"Error": err,
+		}
 		return err
 	}
 
