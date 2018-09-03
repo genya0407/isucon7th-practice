@@ -374,7 +374,7 @@ func jsonifyMessage(m Message) (map[string]interface{}, error) {
 }
 
 func queryMessagesWithUser(userID, chanID, lastID int64) ([]types.MessageWithUser, error) {
-	msgs := []types.MessageWithUser{}
+	var msgs []types.MessageWithUser
 
 	tx, err := db.Beginx()
 	if err != nil {
@@ -385,19 +385,19 @@ func queryMessagesWithUser(userID, chanID, lastID int64) ([]types.MessageWithUse
 		return nil, err
 	}
 
-	rows, err := tx.Queryx(
+	err = tx.Select(&msgs,
 		"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? AND m.id > ? ORDER BY m.id DESC LIMIT 100",
 		chanID, lastID)
 	if err != nil {
 		debugInfoAddCh <- map[string]interface{}{
-			"Event": "query_messages_with_user_failed_queryx",
+			"Event": "query_messages_with_user_failed_select",
 			"Error": err,
 		}
 		tx.Rollback()
 		return nil, err
 	}
 
-	_, err = tx.Exec("INSERT INTO haveread (user_id, channel_id, read_count, updated_at, created_at)"+
+	res, err := tx.Exec("INSERT INTO haveread (user_id, channel_id, read_count, updated_at, created_at)"+
 		" VALUES (?, ?, (SELECT cnt FROM channel WHERE id = ? LIMIT 1), NOW(), NOW())"+
 		" ON DUPLICATE KEY UPDATE read_count = (SELECT cnt FROM channel WHERE id = ? LIMIT 1), updated_at = NOW()",
 		userID, chanID, chanID, chanID)
@@ -405,18 +405,13 @@ func queryMessagesWithUser(userID, chanID, lastID int64) ([]types.MessageWithUse
 		debugInfoAddCh <- map[string]interface{}{
 			"Event": "query_messages_with_user_failed_insert_haveread",
 			"Error": err,
+			"Res": res,
 		}
 		tx.Rollback()
 		return nil, err
 	}
 
 	tx.Commit()
-
-	for rows.Next() {
-		var msg types.MessageWithUser
-		rows.StructScan(&msg)
-		msgs = append(msgs, msg)
-	}
 
 	return msgs, nil
 }
