@@ -378,6 +378,10 @@ func queryMessagesWithUser(userID, chanID, lastID int64) ([]types.MessageWithUse
 
 	tx, err := db.Beginx()
 	if err != nil {
+		debugInfoAddCh <- map[string]interface{}{
+			"Event": "query_messages_with_user_failed_begin_tx",
+			"Error": err,
+		}
 		return nil, err
 	}
 
@@ -385,6 +389,10 @@ func queryMessagesWithUser(userID, chanID, lastID int64) ([]types.MessageWithUse
 		"SELECT m.id as msg_id, m.content, m.created_at, u.name, u.display_name, u.avatar_icon FROM message as m JOIN user as u ON m.user_id = u.id WHERE m.channel_id = ? AND m.id > ? ORDER BY m.id DESC LIMIT 100",
 		chanID, lastID)
 	if err != nil {
+		debugInfoAddCh <- map[string]interface{}{
+			"Event": "query_messages_with_user_failed_queryx",
+			"Error": err,
+		}
 		tx.Rollback()
 		return nil, err
 	}
@@ -394,6 +402,10 @@ func queryMessagesWithUser(userID, chanID, lastID int64) ([]types.MessageWithUse
 		" ON DUPLICATE KEY UPDATE read_count = (SELECT cnt FROM channel WHERE id = ? LIMIT 1), updated_at = NOW()",
 		userID, chanID, chanID, chanID)
 	if err != nil {
+		debugInfoAddCh <- map[string]interface{}{
+			"Event": "query_messages_with_user_failed_insert_haveread",
+			"Error": err,
+		}
 		tx.Rollback()
 		return nil, err
 	}
@@ -450,10 +462,6 @@ func getMessage(c echo.Context) error {
 
 	messages, err := queryMessagesWithUser(userID, chanID, lastID)
 	if err != nil {
-		debugInfoAddCh <- map[string]interface{}{
-			"Event": "query_messages_with_user_failed",
-			"Error": err,
-		}
 		return err
 	}
 
